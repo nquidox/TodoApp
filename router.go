@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"todoApp/db"
 )
 
 type ApiServer struct {
@@ -39,6 +40,21 @@ func (s *ApiServer) Run() error {
 		fmt.Fprint(w, "API v1 is ready.")
 	})
 
+	router.HandleFunc("GET", fmt.Sprintf("%s/createuser", prefix), func(w http.ResponseWriter, r *http.Request) {
+		err := db.CreateUser(db.User{
+			Name:    "Vasya",
+			Surname: "Pupkin",
+			Email:   "some@email.com",
+		})
+
+		if err != nil {
+			fmt.Fprint(w, "Error creating user")
+		} else {
+			fmt.Fprint(w, "User created")
+		}
+
+	})
+
 	log.Printf("Starting server on %s", s.Addr)
 	return server.ListenAndServe()
 }
@@ -54,8 +70,10 @@ func (r *Router) HandleFunc(method, pattern string, handler func(http.ResponseWr
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	for _, route := range r.routes {
 		if req.Method == route.Method && strings.HasPrefix(req.URL.Path, route.Pattern) {
-			route.Handler.ServeHTTP(w, req)
-			return
+			if req.URL.Path == route.Pattern || req.URL.Path == route.Pattern+"/" {
+				route.Handler.ServeHTTP(w, req)
+				return
+			}
 		}
 	}
 	http.NotFound(w, req)

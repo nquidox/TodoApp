@@ -4,6 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"todoApp/config"
+	"todoApp/db"
 )
 
 func main() {
@@ -12,6 +13,7 @@ func main() {
 	}
 
 	c := config.New()
+	db.ConnectToDB(c)
 	server := NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort)
 
 	if err := server.Run(); err != nil {
