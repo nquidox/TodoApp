@@ -7,10 +7,12 @@ import (
 
 type User struct {
 	gorm.Model
-	ID      int
-	Name    string
-	Surname string
-	Email   string
+	ID       int
+	Nickname string
+	Name     string
+	Surname  string
+	Email    string
+	Password string
 }
 
 func initUsersTable() {
@@ -20,7 +22,9 @@ func initUsersTable() {
 	}
 }
 
-func CreateUser(user User) error {
+func CreateUser(data []byte) error {
+	user := new(User)
+	deserializeJSON(data, user)
 	err := DB.Create(&user).Error
 	return err
 }

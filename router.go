@@ -41,11 +41,7 @@ func (s *ApiServer) Run() error {
 	})
 
 	router.HandleFunc("GET", fmt.Sprintf("%s/createuser", prefix), func(w http.ResponseWriter, r *http.Request) {
-		err := db.CreateUser(db.User{
-			Name:    "Vasya",
-			Surname: "Pupkin",
-			Email:   "some@email.com",
-		})
+		err := db.CreateUser([]byte(`{"id":1,"nickname":"vasya_pupkin","name":"Vasya","surname":"Pupkin","email":"vasya.pupkin@example.com","password":"securepassword123"}`))
 
 		if err != nil {
 			fmt.Fprint(w, "Error creating user")
