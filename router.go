@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"todoApp/db"
+	"todoApp/user"
 )
 
 type ApiServer struct {
@@ -27,10 +27,10 @@ func (s *ApiServer) Run() error {
 
 	router.HandleFunc("POST /api/v1/create", func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
-		err = db.CreateUser(body)
+		err = user.CreateUser(body)
 
 		if err != nil {
-			fmt.Fprint(w, "Error creating user")
+			fmt.Fprint(w, "Error creating user", err)
 		} else {
 			fmt.Fprint(w, "User created")
 		}
@@ -44,12 +44,12 @@ func (s *ApiServer) Run() error {
 			return
 		}
 
-		user, err := db.ReadUserByID(userID)
+		usr, err := user.ReadUserByID(userID)
 		if err != nil {
 			fmt.Fprint(w, "Error reading user", http.StatusBadRequest)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, string(user))
+			fmt.Fprint(w, string(usr))
 		}
 	})
 
@@ -60,7 +60,7 @@ func (s *ApiServer) Run() error {
 		if err != nil {
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		}
-		err = db.UpdateUserByID(userID, body)
+		err = user.UpdateUserByID(userID, body)
 		if err != nil {
 			fmt.Fprint(w, "Error updating user", http.StatusBadRequest)
 		}
@@ -72,9 +72,27 @@ func (s *ApiServer) Run() error {
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		}
 
-		err = db.DeleteUserByID(userID)
+		err = user.DeleteUserByID(userID)
 		if err != nil {
 			fmt.Fprint(w, "Error deleting user", http.StatusBadRequest)
+		}
+	})
+
+	router.HandleFunc("POST /api/v1/login", func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Error parsing form", http.StatusBadRequest)
+		}
+
+		usr, err := user.Login(&user.LoginForm{
+			Username: r.Form.Get("username"),
+			Password: r.Form.Get("password"),
+		})
+
+		if err != nil {
+			fmt.Fprint(w, "Error logging in", http.StatusBadRequest)
+		} else {
+			fmt.Fprint(w, usr, http.StatusOK)
 		}
 	})
 

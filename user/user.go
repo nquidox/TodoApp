@@ -1,35 +1,38 @@
-package db
+package user
 
 import (
 	"gorm.io/gorm"
-	"log"
 )
 
 type User struct {
 	gorm.Model
 	ID       int
-	Nickname string
+	Username string
 	Name     string
 	Surname  string
 	Email    string
 	Password string
 }
 
-func initUsersTable() {
-	err := DB.AutoMigrate(&User{})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func CreateUser(data []byte) error {
 	var err error
 	user := new(User)
+
 	err = deserializeJSON(data, user)
 	if err != nil {
 		return err
 	}
+
+	user.Password, err = hashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+
 	err = DB.Create(&user).Error
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
