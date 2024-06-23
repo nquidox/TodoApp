@@ -37,7 +37,7 @@ func (s *ApiServer) Run() error {
 
 	})
 
-	router.HandleFunc("GET /api/v1/read/{id}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(fmt.Sprintf("GET /api/v1/read/{id}"), func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -84,15 +84,17 @@ func (s *ApiServer) Run() error {
 			http.Error(w, "Error parsing form", http.StatusBadRequest)
 		}
 
-		usr, err := user.Login(&user.LoginForm{
+		cookie, err := user.Login(&user.LoginForm{
 			Username: r.Form.Get("username"),
 			Password: r.Form.Get("password"),
 		})
 
 		if err != nil {
-			fmt.Fprint(w, "Error logging in", http.StatusBadRequest)
+			fmt.Fprint(w, "Error logging in", err, http.StatusBadRequest)
 		} else {
-			fmt.Fprint(w, usr, http.StatusOK)
+
+			w.Header().Set("Content-Type", "application/json")
+			http.SetCookie(w, &cookie)
 		}
 	})
 

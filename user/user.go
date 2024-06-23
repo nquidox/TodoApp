@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -12,6 +13,7 @@ type User struct {
 	Surname  string
 	Email    string
 	Password string
+	Uuid     uuid.UUID
 }
 
 func CreateUser(data []byte) error {
@@ -28,12 +30,14 @@ func CreateUser(data []byte) error {
 		return err
 	}
 
+	user.Uuid = uuid.New()
+
 	err = DB.Create(&user).Error
 	if err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func ReadUserByID(id int) ([]byte, error) {
@@ -64,5 +68,8 @@ func UpdateUserByID(id int, data []byte) error {
 
 func DeleteUserByID(id int) error {
 	err := DB.Delete(&User{}, id).Error
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
