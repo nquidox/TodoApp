@@ -98,6 +98,18 @@ func (s *ApiServer) Run() error {
 		}
 	})
 
+	router.HandleFunc("GET /api/v1/logout", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("token")
+		if err != nil {
+			fmt.Fprint(w, "Error getting cookie", http.StatusBadRequest)
+		}
+
+		err = user.Logout(cookie.Value)
+		if err != nil {
+			fmt.Fprint(w, "Error in attempt to logout", http.StatusBadRequest)
+		}
+	})
+
 	log.Printf("Starting server on %s", s.Addr)
 	return server.ListenAndServe()
 }

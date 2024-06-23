@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
 
 type Session struct {
+	gorm.Model
 	Id         int
 	Uuid       uuid.UUID
 	Token      string
@@ -42,6 +44,19 @@ func CreateSession(u uuid.UUID) (http.Cookie, error) {
 	}
 
 	return cookie, nil
+}
+
+func DropSession(cookieToken string) error {
+	var session Session
+	err := DB.Where("token = ?", cookieToken).First(&session).Error
+	if err != nil {
+		return err
+	}
+	err = DB.Delete(&session).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func createSessionCookie(token string, expires time.Time) (http.Cookie, error) {
