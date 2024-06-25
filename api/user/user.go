@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"todoApp/service"
 )
 
 type User struct {
@@ -20,7 +21,7 @@ func CreateUser(data []byte) error {
 	var err error
 	user := new(User)
 
-	err = deserializeJSON(data, user)
+	err = service.DeserializeJSON(data, user)
 	if err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func ReadUserByID(id int) ([]byte, error) {
 	var user User
 	err := DB.First(&user, id).Error
 
-	bytes, err := serializeJSON(user)
+	bytes, err := service.SerializeJSON(user)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func UpdateUserByID(id int, data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = deserializeJSON(data, &user)
+	err = service.DeserializeJSON(data, &user)
 	if err != nil {
 		return err
 	}
