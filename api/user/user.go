@@ -3,7 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"todoApp/service"
+	"todoApp/api/service"
 )
 
 type User struct {
