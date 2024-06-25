@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"log"
+	"todoApp/api/todoList"
+	"todoApp/api/user"
 	"todoApp/config"
 	"todoApp/db"
-	"todoApp/user"
 )
 
 func main() {
@@ -15,9 +16,8 @@ func main() {
 	c := config.New()
 
 	DB := db.ConnectToDB(c)
-
-	user.DB = DB
-	user.InitUsers()
+	user.Init(DB)
+	todoList.Init(DB)
 
 	server := NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort)
 
