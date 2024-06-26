@@ -41,7 +41,7 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	id, err := uuid.Parse(r.PathValue("listId"))
 	todoList := TodoList{}
 
 	data, err := io.ReadAll(r.Body)
@@ -61,7 +61,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
+	id, err := uuid.Parse(r.PathValue("listId"))
 
 	todoList := TodoList{}
 	err = todoList.Delete(id)
