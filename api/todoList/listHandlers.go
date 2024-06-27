@@ -1,20 +1,15 @@
 package todoList
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"todoApp/api/service"
 )
 
-type ListTitle struct {
-	Title string `json:"title"`
-}
-
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	title := ListTitle{}
+	title := RequestTitle{}
 	todoList := &TodoList{}
 
 	responseList := &TodoList{}
@@ -27,33 +22,41 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		response.ResultCode = http.StatusInternalServerError
-		response.Messages = err.Error()
-		serverResponse(w, response)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   err.Error(),
+			Data:       "",
+		})
 		return
 	}
 
 	err = service.DeserializeJSON(data, &title)
 	if err != nil {
-		response.ResultCode = http.StatusInternalServerError
-		response.Messages = err.Error()
-		serverResponse(w, response)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   err.Error(),
+			Data:       "",
+		})
 		return
 	}
 
 	err = validateListOnCreate(title.Title)
 	if err != nil {
-		response.ResultCode = http.StatusBadRequest
-		response.Messages = "Error: " + err.Error()
-		serverResponse(w, response)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusBadRequest,
+			Messages:   err.Error(),
+			Data:       "",
+		})
 		return
 	}
 
 	responseList, err = todoList.Create(title.Title)
 	if err != nil {
-		response.ResultCode = http.StatusInternalServerError
-		response.Messages = err.Error()
-		serverResponse(w, response)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   err.Error(),
+			Data:       "",
+		})
 		return
 	}
 
@@ -62,15 +65,17 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	todoLists := TodoList{}
 	lists, err := todoLists.GetAllLists()
 	if err != nil {
-		fmt.Fprint(w, "Error getting lists: ", err, http.StatusInternalServerError)
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		response, _ := service.SerializeJSON(lists)
-		fmt.Fprint(w, string(response))
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   "Error getting lists: " + err.Error(),
+			Data:       "",
+		})
 	}
+	serverResponse(w, lists)
 }
 
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,54 +84,54 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error parsing body", http.StatusBadRequest)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusBadRequest,
+			Messages:   err.Error(),
+			Data:       "",
+		})
+		return
 	}
 
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
-		http.Error(w, "Error parsing body", http.StatusBadRequest)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusBadRequest,
+			Messages:   err.Error(),
+			Data:       "",
+		})
+		return
 	}
 
 	err = todoList.Update(id, todoList.Title)
 	if err != nil {
-		fmt.Fprint(w, "Error updating list: ", err, http.StatusInternalServerError)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   "Error updating list: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
 }
 
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		response := Response{
+		serverResponse(w, ErrorResponse{
 			ResultCode: http.StatusBadRequest,
 			Messages:   "ID Error: " + err.Error(),
-			Data:       Item{},
-		}
-		serverResponse(w, response)
+			Data:       "",
+		})
 		return
 	}
 
 	todoList := TodoList{}
 	err = todoList.Delete(id)
 	if err != nil {
-		response := Response{
-			ResultCode: 500,
-			Messages:   "Error deleting list: " + err.Error(),
-			Data:       Item{},
-		}
-		serverResponse(w, response)
-	}
-}
-
-func serverResponse(w http.ResponseWriter, response Response) {
-	w.Header().Set("Content-Type", "application/json")
-	bytes, err := service.SerializeJSON(response)
-	if err != nil {
-		http.Error(w, "Error serializing response: "+err.Error(), http.StatusInternalServerError)
+		serverResponse(w, ErrorResponse{
+			ResultCode: http.StatusInternalServerError,
+			Messages:   "Internal server error: " + err.Error(),
+			Data:       "",
+		})
 		return
-	}
-
-	_, err = w.Write(bytes)
-	if err != nil {
-		http.Error(w, "Error writing response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
