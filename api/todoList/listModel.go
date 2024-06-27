@@ -14,23 +14,28 @@ type TodoList struct {
 	Order      int       `json:"order"`
 }
 
-func (t *TodoList) Create(title string) error {
-	err := validateListOnCreate(title)
-	if err != nil {
-		return err
-	}
+type Item struct {
+	List TodoList `json:"item"`
+}
 
+type Response struct {
+	ResultCode int    `json:"resultCode"`
+	Messages   string `json:"messages"`
+	Data       Item   `json:"data"`
+}
+
+func (t *TodoList) Create(title string) (*TodoList, error) {
 	t.Uuid = uuid.New()
 	t.Title = title
 	t.AddedDate = time.Now()
 	t.Order = 0
 
-	err = DB.Create(t).Error
+	err := DB.Create(t).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return t, nil
 }
 
 func (t *TodoList) GetAllLists() ([]TodoList, error) {
