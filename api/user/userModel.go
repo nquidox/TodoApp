@@ -17,6 +17,14 @@ type User struct {
 	Uuid     uuid.UUID
 }
 
+func (u *User) Create() {}
+
+func (u *User) Read() {}
+
+func (u *User) Update() {}
+
+func (u *User) Delete() {}
+
 func CreateUser(data []byte) error {
 	var err error
 	user := new(User)

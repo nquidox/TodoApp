@@ -20,6 +20,7 @@ type Item struct {
 
 type Response struct {
 	ResultCode int    `json:"resultCode"`
+	ErrorCode  int    `json:"errorCode"`
 	Messages   string `json:"messages"`
 	Data       Item   `json:"data"`
 }

@@ -16,14 +16,16 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	item := Item{*responseList}
 	response := Response{
 		ResultCode: 0,
+		ErrorCode:  http.StatusOK,
 		Messages:   "",
 		Data:       item,
 	}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -32,8 +34,9 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &title)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -42,8 +45,9 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = validateListOnCreate(title.Title)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusBadRequest,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -52,8 +56,9 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	responseList, err = todoList.Create(title.Title)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -61,7 +66,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Data.List = *responseList
-	serverResponse(w, response)
+	service.ServerResponse(w, response)
 }
 
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,13 +74,14 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	todoLists := TodoList{}
 	lists, err := todoLists.GetAllLists()
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   "Error getting lists: " + err.Error(),
 			Data:       "",
 		})
 	}
-	serverResponse(w, lists)
+	service.ServerResponse(w, lists)
 }
 
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,8 +90,9 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusBadRequest,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -94,8 +101,9 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusBadRequest,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
 			Messages:   err.Error(),
 			Data:       "",
 		})
@@ -104,8 +112,9 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = todoList.Update(id, todoList.Title)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   "Error updating list: " + err.Error(),
 			Data:       "",
 		})
@@ -116,8 +125,9 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusBadRequest,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
 			Messages:   "ID Error: " + err.Error(),
 			Data:       "",
 		})
@@ -127,8 +137,9 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	todoList := TodoList{}
 	err = todoList.Delete(id)
 	if err != nil {
-		serverResponse(w, ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   "Internal server error: " + err.Error(),
 			Data:       "",
 		})
