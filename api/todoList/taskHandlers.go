@@ -13,8 +13,9 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -23,32 +24,44 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
-			Messages:   "Internal server error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Error reading body: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	title := RequestTitle{}
+	task := Task{TodoListId: id}
 
-	err = service.DeserializeJSON(data, title)
+	err = service.DeserializeJSON(data, &task)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
-			Messages:   "Internal server error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "JSON read error: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	task := Task{}
-
-	err = task.Create(id, title.Title)
+	err = task.validateTitle()
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
-			Messages:   "Internal server error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Validation error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	err = task.Create()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Create task error: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -67,19 +80,21 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "List ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	tasks := Task{}
-	read, err := tasks.Read(id, count, page)
+	tasks := Task{TodoListId: id}
+	read, err := tasks.Read(count, page)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
-			Messages:   "Read error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Tasks read error: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -94,8 +109,9 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "List ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -104,8 +120,9 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	taskId, err := uuid.Parse(r.PathValue("taskId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "Task ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -114,45 +131,61 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "Body parse error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error reading body: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	task := Task{}
+	task := Task{TaskId: taskId, TodoListId: listId}
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
-			Messages:   "Task parse error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "JSON read error: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	result, err := task.Update(listId, taskId)
+	err = task.validateTitle()
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Validation error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	err = task.Update()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   "Task update error: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	service.ServerResponse(w, result)
+	service.ServerResponse(w, task)
 }
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: refactor error write
+	w.Header().Set("Content-Type", "application/json")
+
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "List ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
@@ -161,21 +194,30 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	taskId, err := uuid.Parse(r.PathValue("taskId"))
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusBadRequest,
-			Messages:   "Task ID error: " + err.Error(),
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error parsing id: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
 
-	t := Task{}
-	err = t.Delete(listId, taskId)
+	t := Task{TodoListId: listId, TaskId: taskId}
+	err = t.Delete()
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: http.StatusInternalServerError,
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
 			Messages:   "Delete error: " + err.Error(),
 			Data:       "",
 		})
 		return
 	}
+
+	service.ServerResponse(w, service.ErrorResponse{
+		ResultCode: 0,
+		ErrorCode:  http.StatusOK,
+		Messages:   "",
+		Data:       "",
+	})
 }

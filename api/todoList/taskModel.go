@@ -1,6 +1,7 @@
 package todoList
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
@@ -10,7 +11,7 @@ type Task struct {
 	gorm.Model  `json:"-"`
 	Description string    `json:"description"`
 	Title       string    `json:"title"`
-	Completed   bool      `json:"completed"`
+	Completed   string    `json:"completed"`
 	Status      int       `json:"status"`
 	Priority    int       `json:"priority"`
 	StartDate   time.Time `json:"startDate"`
@@ -21,18 +22,16 @@ type Task struct {
 	AddedDate   time.Time `json:"addedDate"`
 }
 
-func (t *Task) Create(listId uuid.UUID, title string) error {
+func (t *Task) Create() error {
 	var err error
 
 	t.Description = ""
-	t.Title = title
-	t.Completed = false
+	t.Completed = "false"
 	t.Status = 0
 	t.Priority = 1
 	t.StartDate = time.Time{}
 	t.Deadline = time.Time{}
 	t.TaskId = uuid.New()
-	t.TodoListId = listId
 	t.Order = 0
 	t.AddedDate = time.Now()
 
@@ -44,58 +43,55 @@ func (t *Task) Create(listId uuid.UUID, title string) error {
 	return nil
 }
 
-func (t *Task) Read(listId uuid.UUID, count, page int) ([]Task, error) {
-	var err error
+func (t *Task) Read(count, page int) ([]Task, error) {
 	var tasks []Task
 
-	err = DB.
-		Where("todo_list_id = ?", listId).
+	result := DB.
+		Where("todo_list_id = ?", t.TodoListId).
 		Offset((page - 1) * count).
 		Limit(count).
-		Find(&tasks).
-		Error
+		Find(&tasks)
 
-	if err != nil {
-		return []Task{}, err
+	if result.Error != nil {
+		return nil, result.Error
 	}
+
+	if result.RowsAffected == 0 {
+		return nil, errors.New("not found")
+	}
+
 	return tasks, nil
 }
 
-func (t *Task) Update(listId, taskId uuid.UUID) (Task, error) {
-	var err error
-	var list TodoList
-	var currentTask Task
+func (t *Task) Update() error {
+	result := DB.
+		Where("todo_list_id = ?", t.TodoListId).
+		Where("task_id = ?", t.TaskId).
+		Updates(t)
 
-	err = DB.Where("uuid = ?", listId).First(&list).Error
-	if err != nil {
-		return Task{}, err
+	if result.Error != nil {
+		return result.Error
 	}
 
-	err = DB.Where("task_id = ?", taskId).First(&currentTask).Error
-	if err != nil {
-		return Task{}, err
+	if result.RowsAffected == 0 {
+		return errors.New("not found")
 	}
 
-	err = DB.Model(&currentTask).Updates(t).Error
-	if err != nil {
-		return Task{}, err
-	}
-
-	return currentTask, nil
+	return nil
 }
 
-func (t *Task) Delete(listId uuid.UUID, taskId uuid.UUID) error {
-	var err error
-	var list TodoList
+func (t *Task) Delete() error {
+	result := DB.
+		Where("todo_list_id = ?", t.TodoListId).
+		Where("task_id = ?", t.TaskId).
+		Delete(t)
 
-	err = DB.Where("uuid = ?", listId).First(&list).Error
-	if err != nil {
-		return err
+	if result.Error != nil {
+		return result.Error
 	}
 
-	err = DB.Where("task_id = ?", taskId).Delete(t).Error
-	if err != nil {
-		return err
+	if result.RowsAffected == 0 {
+		return errors.New("not found")
 	}
 	return nil
 }

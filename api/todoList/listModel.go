@@ -1,6 +1,7 @@
 package todoList
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
@@ -12,60 +13,64 @@ type TodoList struct {
 	Title      string    `json:"title"`
 	AddedDate  time.Time `json:"addedDate"`
 	Order      int       `json:"order"`
+	OwnerUuid  uuid.UUID `json:"-"`
 }
 
 type Item struct {
 	List TodoList `json:"item"`
 }
 
-type Response struct {
-	ResultCode int    `json:"resultCode"`
-	ErrorCode  int    `json:"errorCode"`
-	Messages   string `json:"messages"`
-	Data       Item   `json:"data"`
-}
+//type Response struct {
+//	ResultCode int    `json:"resultCode"`
+//	ErrorCode  int    `json:"errorCode"`
+//	Messages   string `json:"messages"`
+//	Data       Item   `json:"data"`
+//}
 
-func (t *TodoList) Create(title string) (*TodoList, error) {
+func (t *TodoList) Create() error {
 	t.Uuid = uuid.New()
-	t.Title = title
 	t.AddedDate = time.Now()
 	t.Order = 0
 
 	err := DB.Create(t).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return t, nil
+	return nil
 }
 
 func (t *TodoList) GetAllLists() ([]TodoList, error) {
 	var allLists []TodoList
 	err := DB.Find(&allLists).Error
 	if err != nil {
-		return []TodoList{}, err
+		return nil, err
 	}
 	return allLists, nil
 }
 
-func (t *TodoList) Update(id uuid.UUID, title string) error {
-	err := DB.Where("uuid = ?", id).First(t).Error
-	if err != nil {
-		return err
+func (t *TodoList) Update() error {
+	result := DB.Where("uuid = ?", t.Uuid).Updates(t)
+
+	if result.Error != nil {
+		return result.Error
 	}
 
-	t.Title = title
-	err = DB.Save(t).Error
-	if err != nil {
-		return err
+	if result.RowsAffected == 0 {
+		return errors.New("list not found")
 	}
 	return nil
 }
 
-func (t *TodoList) Delete(uuid uuid.UUID) error {
-	err := DB.Where("uuid = ?", uuid).Delete(t).Error
-	if err != nil {
-		return err
+func (t *TodoList) Delete() error {
+	result := DB.Where("uuid = ?", t.Uuid).Delete(t)
+	
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("list not found")
 	}
 	return nil
 }
