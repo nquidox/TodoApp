@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var SALT []byte
+
 type Session struct {
 	gorm.Model
 	Id         int
@@ -18,7 +20,7 @@ type Session struct {
 	Expires    time.Time
 }
 
-func CreateSession(u uuid.UUID) (http.Cookie, error) {
+func createSession(u uuid.UUID) (http.Cookie, error) {
 	token, err := generateToken(32)
 	if err != nil {
 		return http.Cookie{}, err
@@ -46,7 +48,7 @@ func CreateSession(u uuid.UUID) (http.Cookie, error) {
 	return cookie, nil
 }
 
-func DropSession(cookieToken string) error {
+func dropSession(cookieToken string) error {
 	var session Session
 	err := DB.Where("token = ?", cookieToken).First(&session).Error
 	if err != nil {
@@ -77,5 +79,6 @@ func generateToken(length int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	bytes = append(bytes, SALT...)
 	return hex.EncodeToString(bytes), nil
 }

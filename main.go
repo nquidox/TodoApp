@@ -15,6 +15,8 @@ func main() {
 	}
 	c := config.New()
 
+	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
+
 	DB := db.ConnectToDB(c)
 	user.Init(DB)
 	todoList.Init(DB)

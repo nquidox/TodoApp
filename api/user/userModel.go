@@ -1,47 +1,55 @@
 package user
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"todoApp/api/service"
 )
 
 type User struct {
 	gorm.Model
 	ID       int
-	Username string
-	Name     string
-	Surname  string
-	Email    string
-	Password string
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 	Uuid     uuid.UUID
 }
 
-func (u *User) Create() {}
-
-func (u *User) Read() {}
-
-func (u *User) Update() {}
-
-func (u *User) Delete() {}
-
-func CreateUser(data []byte) error {
+func (u *User) Create() error {
 	var err error
-	user := new(User)
+	u.Uuid = uuid.New()
 
-	err = service.DeserializeJSON(data, user)
+	u.Password, err = hashPassword(u.Password)
 	if err != nil {
 		return err
 	}
 
-	user.Password, err = hashPassword(user.Password)
+	err = DB.Create(u).Error
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	user.Uuid = uuid.New()
+func (u *User) Read() error {
+	err := DB.
+		Where("uuid = ?", u.Uuid).
+		First(u).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-	err = DB.Create(&user).Error
+func (u *User) Update() error {
+	var err error
+
+	err = DB.
+		Where("uuid = ?", u.Uuid).
+		Updates(u).
+		Error
 	if err != nil {
 		return err
 	}
@@ -49,36 +57,18 @@ func CreateUser(data []byte) error {
 	return nil
 }
 
-func ReadUserByID(id int) ([]byte, error) {
-	var user User
-	err := DB.First(&user, id).Error
+func (u *User) Delete() error {
+	result := DB.
+		Where("uuid = ?", u.Uuid).
+		Delete(u)
 
-	bytes, err := service.SerializeJSON(user)
-	if err != nil {
-		return nil, err
+	if result.Error != nil {
+		return result.Error
 	}
 
-	return bytes, err
-}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
 
-func UpdateUserByID(id int, data []byte) error {
-	var user User
-	err := DB.First(&user, id).Error
-	if err != nil {
-		return err
-	}
-	err = service.DeserializeJSON(data, &user)
-	if err != nil {
-		return err
-	}
-	err = DB.Save(&user).Error
-	return err
-}
-
-func DeleteUserByID(id int) error {
-	err := DB.Delete(&User{}, id).Error
-	if err != nil {
-		return err
-	}
 	return nil
 }

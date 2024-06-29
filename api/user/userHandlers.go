@@ -1,90 +1,179 @@
 package user
 
 import (
-	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
-	"strconv"
+	"todoApp/api/service"
 )
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	err = CreateUser(body)
-	if err != nil {
-		fmt.Fprint(w, "Error creating user", err)
-	} else {
-		fmt.Fprint(w, "User created")
-	}
-}
+	w.Header().Set("Content-Type", "application/json")
+	usr := User{}
 
-func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.PathValue("id"))
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error reading body: " + err.Error(),
+			Data:       "",
+		})
 		return
 	}
 
-	usr, err := ReadUserByID(userID)
+	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		fmt.Fprint(w, "Error reading user", http.StatusBadRequest)
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, string(usr))
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Error deserializing user: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
+
+	err = usr.CheckRequiredFields()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Validation error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	err = usr.Create()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Error creating user: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	service.ServerResponse(w, usr)
+}
+
+func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userUUID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "ID parse error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	usr := User{Uuid: userUUID}
+	err = usr.Read()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "User read error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	service.ServerResponse(w, usr)
 }
 
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.PathValue("id"))
-	body, err := io.ReadAll(r.Body)
+	w.Header().Set("Content-Type", "application/json")
+
+	userUUID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "ID parse error: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
-	err = UpdateUserByID(userID, body)
+
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprint(w, "Error updating user", http.StatusBadRequest)
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "Error reading body: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
+
+	usr := User{Uuid: userUUID}
+	err = service.DeserializeJSON(data, &usr)
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Error deserializing user: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	err = usr.Update()
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "User update error: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	service.ServerResponse(w, service.ErrorResponse{
+		ResultCode: 0,
+		ErrorCode:  http.StatusOK,
+		Messages:   "User updated successfully",
+		Data:       "",
+	})
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.PathValue("id"))
+	w.Header().Set("Content-Type", "application/json")
+
+	userUUID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusBadRequest,
+			Messages:   "ID parse error: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
 
-	err = DeleteUserByID(userID)
-	if err != nil {
-		fmt.Fprint(w, "Error deleting user", http.StatusBadRequest)
-	}
-}
+	usr := User{Uuid: userUUID}
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	err = usr.Delete()
 	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "User delete error: " + err.Error(),
+			Data:       "",
+		})
+		return
 	}
 
-	cookie, err := Login(&LoginForm{
-		Username: r.Form.Get("username"),
-		Password: r.Form.Get("password"),
+	service.ServerResponse(w, service.ErrorResponse{
+		ResultCode: 0,
+		ErrorCode:  http.StatusOK,
+		Messages:   "User deleted successfully",
+		Data:       "",
 	})
-
-	if err != nil {
-		fmt.Fprint(w, "Error logging in", err, http.StatusBadRequest)
-	} else {
-
-		w.Header().Set("Content-Type", "application/json")
-		http.SetCookie(w, &cookie)
-	}
-}
-
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
-	if err != nil {
-		fmt.Fprint(w, "Error getting cookie", http.StatusBadRequest)
-	}
-
-	err = Logout(cookie.Value)
-	if err != nil {
-		fmt.Fprint(w, "Error in attempt to logout", http.StatusBadRequest)
-	}
 }

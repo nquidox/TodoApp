@@ -3,10 +3,10 @@ package service
 import "net/http"
 
 type ErrorResponse struct {
-	ResultCode int    `json:"resultCode"`
-	ErrorCode  int    `json:"errorCode"`
-	Messages   string `json:"messages"`
-	Data       string `json:"data"`
+	ResultCode int         `json:"resultCode"`
+	ErrorCode  int         `json:"errorCode"`
+	Messages   string      `json:"messages"`
+	Data       interface{} `json:"data"`
 }
 
 func ServerResponse(w http.ResponseWriter, dataInterface interface{}) {
