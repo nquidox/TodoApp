@@ -72,6 +72,17 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = Authorized(r, userUUID)
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusUnauthorized,
+			Messages:   "Unauthorized",
+			Data:       "",
+		})
+		return
+	}
+
 	usr := User{Uuid: userUUID}
 	err = usr.Read()
 	if err != nil {
@@ -101,6 +112,19 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	usr := User{Uuid: userUUID}
+
+	err = Authorized(r, userUUID)
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusUnauthorized,
+			Messages:   "Unauthorized",
+			Data:       "",
+		})
+		return
+	}
+
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
@@ -112,7 +136,6 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := User{Uuid: userUUID}
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
@@ -158,6 +181,17 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	usr := User{Uuid: userUUID}
+
+	err = Authorized(r, userUUID)
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusUnauthorized,
+			Messages:   "Unauthorized",
+			Data:       "",
+		})
+		return
+	}
 
 	err = usr.Delete()
 	if err != nil {

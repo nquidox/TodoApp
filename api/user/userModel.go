@@ -8,18 +8,20 @@ import (
 
 type User struct {
 	gorm.Model
-	ID       int
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Surname  string `json:"surname"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Uuid     uuid.UUID
+	ID          int
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Surname     string `json:"surname"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	Uuid        uuid.UUID
+	IsSuperuser bool `json:"-"`
 }
 
 func (u *User) Create() error {
 	var err error
 	u.Uuid = uuid.New()
+	u.IsSuperuser = false
 
 	u.Password, err = hashPassword(u.Password)
 	if err != nil {

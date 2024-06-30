@@ -3,6 +3,7 @@ package user
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"net/http"
@@ -18,6 +19,25 @@ type Session struct {
 	Token      string
 	ClientInfo string
 	Expires    time.Time
+}
+
+func Authorized(r *http.Request, userId uuid.UUID) error {
+	var userSession Session
+	token, err := r.Cookie("token")
+	if err != nil {
+		return err
+	}
+
+	err = DB.Where("token = ?", token.Value).First(&userSession).Error
+	if err != nil {
+		return err
+	}
+
+	if userSession.Uuid != userId {
+		return errors.New("invalid token")
+	}
+
+	return nil
 }
 
 func createSession(u uuid.UUID) (http.Cookie, error) {
