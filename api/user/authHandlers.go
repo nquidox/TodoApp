@@ -7,6 +7,63 @@ import (
 	"todoApp/api/service"
 )
 
+func MeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusUnauthorized,
+			Messages:   "Unauthorized",
+			Data:       "",
+		})
+		return
+	}
+
+	tokenString := token.Value
+	s := Session{}
+	err = DB.Where("token = ?", tokenString).First(&s).Error
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusUnauthorized,
+			Messages:   "Unauthorized",
+			Data:       "",
+		})
+		return
+	}
+
+	usr := User{Uuid: s.Uuid}
+	err = DB.Model(&usr).Where("uuid = ?", s.Uuid).First(&usr).Error
+	if err != nil {
+		service.ServerResponse(w, service.ErrorResponse{
+			ResultCode: 1,
+			ErrorCode:  http.StatusInternalServerError,
+			Messages:   "Error reading user from DB: " + err.Error(),
+			Data:       "",
+		})
+		return
+	}
+
+	type shortUser struct {
+		Uuid     uuid.UUID `json:"id"`
+		Email    string    `json:"email"`
+		Username string    `json:"login"`
+	}
+
+	service.ServerResponse(w, service.ErrorResponse{
+		ResultCode: 0,
+		ErrorCode:  200,
+		Messages:   "",
+		Data: shortUser{
+			Uuid:     usr.Uuid,
+			Email:    usr.Email,
+			Username: usr.Username,
+		},
+	})
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
