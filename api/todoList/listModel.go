@@ -20,13 +20,6 @@ type Item struct {
 	List TodoList `json:"item"`
 }
 
-//type Response struct {
-//	ResultCode int    `json:"resultCode"`
-//	ErrorCode  int    `json:"errorCode"`
-//	Messages   string `json:"messages"`
-//	Data       Item   `json:"data"`
-//}
-
 func (t *TodoList) Create() error {
 	t.Uuid = uuid.New()
 	t.AddedDate = time.Now()
@@ -64,7 +57,7 @@ func (t *TodoList) Update() error {
 
 func (t *TodoList) Delete() error {
 	result := DB.Where("uuid = ?", t.Uuid).Delete(t)
-	
+
 	if result.Error != nil {
 		return result.Error
 	}
