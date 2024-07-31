@@ -9,6 +9,26 @@ import (
 	"todoApp/db"
 )
 
+//	@title			TODO App API
+//	@version		1.0
+//	@description	This is an educational TODO App API, clone of IT-Incubator's API written in Go.
+
+//	@contact.name	API Support
+//	@contact.url	https://t.me/rekasawak
+
+//	@license.name	MIT
+//	@license.url	https://mit-license.org/
+
+//	@host		localhost:9000
+//	@BasePath	/api/v1
+
+//	@SecurityDefinition	CookieAuth
+//	@in					cookie
+//	@name				Authorization
+
+//	@externalDocs.description	OpenAPI
+//	@externalDocs.url			https://swagger.io/resources/open-api/
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
