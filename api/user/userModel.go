@@ -7,15 +7,15 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	ID          int
-	Username    string `json:"username"`
-	Name        string `json:"name"`
-	Surname     string `json:"surname"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	Uuid        uuid.UUID
-	IsSuperuser bool `json:"-"`
+	gorm.Model  `json:"-"`
+	ID          int       `json:"-"`
+	Username    string    `json:"login"`
+	Name        string    `json:"name"`
+	Surname     string    `json:"surname"`
+	Email       string    `json:"email" binding:"required" example:"example@email.box"`
+	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word"`
+	Uuid        uuid.UUID `json:"-"`
+	IsSuperuser bool      `json:"-"`
 }
 
 func (u *User) Create() error {
