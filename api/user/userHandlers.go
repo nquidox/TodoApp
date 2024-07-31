@@ -7,8 +7,20 @@ import (
 	"todoApp/api/service"
 )
 
+// CreateUserHandler     godoc
+//
+//	@Summary		Create user
+//	@Description	Create new user account
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		User	true	"Create new user"
+//	@Success		200		{object}	User
+//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/user [post]
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	usr := User{}
 
 	data, err := io.ReadAll(r.Body)
@@ -58,6 +70,19 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	service.ServerResponse(w, usr)
 }
 
+// ReadUserHandler     godoc
+//
+//	@Summary		Get user
+//	@Description	Get user info, uuid required
+//	@Tags			User
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Param			id	path		string	true	"uuid"
+//	@Success		200	{object}	User
+//	@Failure		400	{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401	{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/user/{id} [get]
 func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -98,6 +123,19 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	service.ServerResponse(w, usr)
 }
 
+// UpdateUserHandler     godoc
+//
+//	@Summary		Update user
+//	@Description	Update user account
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		User	true	"Update user"
+//	@Success		200		{object}	service.ErrorResponse
+//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/user/{id} [put]
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -166,6 +204,19 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteUserHandler     godoc
+//
+//	@Summary		Delete user
+//	@Description	Delete user account
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		User	true	"Delete user"
+//	@Success		200		{object}	service.ErrorResponse
+//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/user/{id} [delete]
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
