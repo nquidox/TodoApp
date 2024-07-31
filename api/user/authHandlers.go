@@ -64,6 +64,19 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// LoginHandler     godoc
+//
+//	@Summary		Log in
+//	@Description	Success login gives you a cookie with access token
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		User	true	"Login"
+//	@Success		200		{object}	service.ErrorResponse
+//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/login [post]
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -145,6 +158,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// LogoutHandler     godoc
+//
+//	@Summary		Log out
+//	@Description	Log out and invalidate access token
+//	@Tags			Auth
+//	@Success		200
+//	@Failure		400	{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401	{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/logout [get]
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
