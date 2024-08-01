@@ -3,14 +3,15 @@ package config
 import "os"
 
 type EnvFileConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Dbname   string
-	Sslmode  string
-	HTTPHost string
-	HTTPPort string
+	Host       string
+	Port       string
+	User       string
+	Password   string
+	Dbname     string
+	Sslmode    string
+	HTTPHost   string
+	HTTPPort   string
+	DBLogLevel string
 }
 
 type Config struct {
@@ -19,14 +20,15 @@ type Config struct {
 
 func New() *Config {
 	return &Config{Config: EnvFileConfig{
-		Host:     getEnv("DB_HOST"),
-		Port:     getEnv("DB_PORT"),
-		User:     getEnv("DB_USER"),
-		Password: getEnv("DB_PASSWORD"),
-		Dbname:   getEnv("DB_NAME"),
-		Sslmode:  getEnv("DB_SSLMODE"),
-		HTTPHost: getEnv("HTTP_HOST"),
-		HTTPPort: getEnv("HTTP_PORT"),
+		Host:       getEnv("DB_HOST"),
+		Port:       getEnv("DB_PORT"),
+		User:       getEnv("DB_USER"),
+		Password:   getEnv("DB_PASSWORD"),
+		Dbname:     getEnv("DB_NAME"),
+		Sslmode:    getEnv("DB_SSLMODE"),
+		HTTPHost:   getEnv("HTTP_HOST"),
+		HTTPPort:   getEnv("HTTP_PORT"),
+		DBLogLevel: getEnv("DB_LOG_LEVEL"),
 	}}
 }
 
