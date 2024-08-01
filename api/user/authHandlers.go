@@ -7,6 +7,17 @@ import (
 	"todoApp/api/service"
 )
 
+// MeHandler     godoc
+//
+//	@Summary		Me request
+//	@Description	Me request
+//	@Tags			Auth
+//	@Produce		json
+//	@Success		200	{object}	meResponse
+//	@Failure		400	{object}	service.ErrorResponse	"Bad request"
+//	@Failure		401	{object}	service.ErrorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.ErrorResponse	"Internal Server Error"
+//	@Router			/me [get]
 func MeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -34,7 +45,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := User{Uuid: s.Uuid}
+	usr := meModel{UserUUID: s.Uuid}
 	err = DB.Model(&usr).Where("uuid = ?", s.Uuid).First(&usr).Error
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
@@ -46,18 +57,12 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type shortUser struct {
-		Uuid     uuid.UUID `json:"id"`
-		Email    string    `json:"email"`
-		Username string    `json:"login"`
-	}
-
-	service.ServerResponse(w, service.ErrorResponse{
+	service.ServerResponse(w, meResponse{
 		ResultCode: 0,
-		ErrorCode:  200,
-		Messages:   "",
-		Data: shortUser{
-			Uuid:     usr.Uuid,
+		HttpCode:   200,
+		Messages:   nil,
+		Data: meModel{
+			UserUUID: usr.UserUUID,
 			Email:    usr.Email,
 			Username: usr.Username,
 		},
@@ -71,7 +76,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			user	body		User	true	"Login"
+//	@Param			user	body		loginUserModel	true	"Login"
 //	@Success		200		{object}	service.ErrorResponse
 //	@Failure		400		{object}	service.ErrorResponse	"Bad request"
 //	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
@@ -90,7 +95,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	usr := User{}
+	usr := loginUserModel{}
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
@@ -134,7 +139,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := createSession(getUsr.Uuid)
+	cookie, err := createSession(getUsr.UserUUID)
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
 			ResultCode: 1,
@@ -154,7 +159,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		ResultCode: 0,
 		ErrorCode:  http.StatusOK,
 		Messages:   "",
-		Data:       uuidOnly{UUID: getUsr.Uuid},
+		Data:       uuidOnly{UUID: getUsr.UserUUID},
 	})
 }
 

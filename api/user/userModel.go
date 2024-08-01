@@ -14,43 +14,61 @@ type User struct {
 	Surname     string    `json:"surname"`
 	Email       string    `json:"email" binding:"required" example:"example@email.box"`
 	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word"`
-	Uuid        uuid.UUID `json:"-"`
+	UserUUID    uuid.UUID `json:"-"`
 	IsSuperuser bool      `json:"-"`
 }
 
-func (u *User) Create() error {
+type meModel struct {
+	UserUUID uuid.UUID `json:"id" extensions:"x-order=1"`
+	Email    string    `json:"email" extensions:"x-order=2"`
+	Username string    `json:"login" extensions:"x-order=3"`
+}
+
+type meResponse struct {
+	ResultCode int      `json:"resultCode" extensions:"x-order=1"`
+	HttpCode   int      `json:"httpCode" extensions:"x-order=2"`
+	Messages   []string `json:"messages" extensions:"x-order=3"`
+	Data       meModel  `json:"data" extensions:"x-order=4"`
+}
+
+type loginUserModel struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (l *User) Create() error {
 	var err error
-	u.Uuid = uuid.New()
-	u.IsSuperuser = false
+	l.UserUUID = uuid.New()
+	l.IsSuperuser = false
 
-	u.Password, err = hashPassword(u.Password)
+	l.Password, err = hashPassword(l.Password)
 	if err != nil {
 		return err
 	}
 
-	err = DB.Create(u).Error
+	err = DB.Create(l).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) Read() error {
+func (l *User) Read() error {
 	err := DB.
-		Where("uuid = ?", u.Uuid).
-		First(u).Error
+		Where("uuid = ?", l.UserUUID).
+		First(l).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) Update() error {
+func (l *User) Update() error {
 	var err error
 
 	err = DB.
-		Where("uuid = ?", u.Uuid).
-		Updates(u).
+		Where("uuid = ?", l.UserUUID).
+		Updates(l).
 		Error
 	if err != nil {
 		return err
@@ -59,10 +77,10 @@ func (u *User) Update() error {
 	return nil
 }
 
-func (u *User) Delete() error {
+func (l *User) Delete() error {
 	result := DB.
-		Where("uuid = ?", u.Uuid).
-		Delete(u)
+		Where("uuid = ?", l.UserUUID).
+		Delete(l)
 
 	if result.Error != nil {
 		return result.Error

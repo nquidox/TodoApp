@@ -75,7 +75,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get user
 //	@Description	Get user info, uuid required
 //	@Tags			User
-//	@Security		ApiKeyAuth
+//	@Security		CookieAuth
 //	@Produce		json
 //	@Param			id	path		string	true	"uuid"
 //	@Success		200	{object}	User
@@ -108,7 +108,7 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := User{Uuid: userUUID}
+	usr := User{UserUUID: userUUID}
 	err = usr.Read()
 	if err != nil {
 		service.ServerResponse(w, service.ErrorResponse{
@@ -150,7 +150,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := User{Uuid: userUUID}
+	usr := User{UserUUID: userUUID}
 
 	err = Authorized(r, userUUID)
 	if err != nil {
@@ -231,7 +231,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := User{Uuid: userUUID}
+	usr := User{UserUUID: userUUID}
 
 	err = Authorized(r, userUUID)
 	if err != nil {
