@@ -13,51 +13,31 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "JSON read error: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONReadErr, err)
 		return
 	}
 
 	err = todoList.validateTitle()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Validation error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ValidationErr, err)
 		return
 	}
 
 	err = todoList.Create()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Create list error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.ListCreateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
+		HttpCode:   http.StatusOK,
 		Messages:   "",
 		Data: Item{
 			List: todoList,
@@ -71,14 +51,10 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 
 	lists, err := todoLists.GetAllLists()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error getting lists: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.ListReadErr, err)
+		return
 	}
-	service.ServerResponse(w, lists)
+	service.OkResponse(w, lists)
 }
 
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,12 +62,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
@@ -99,40 +70,25 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "JSON read error: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONReadErr, err)
 		return
 	}
 
 	err = todoList.Update()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error updating list: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.ListUpdateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
+		HttpCode:   http.StatusOK,
 		Messages:   "",
 		Data:       "",
 	})
@@ -142,30 +98,20 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 	todoList := TodoList{Uuid: id}
 
 	err = todoList.Delete()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Internal server error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.ListDeleteErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
+		HttpCode:   http.StatusOK,
 		Messages:   "",
 		Data:       "",
 	})

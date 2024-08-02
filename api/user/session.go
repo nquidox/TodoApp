@@ -15,7 +15,7 @@ var SALT []byte
 type Session struct {
 	gorm.Model
 	Id         int
-	Uuid       uuid.UUID
+	UserUuid   uuid.UUID
 	Token      string
 	ClientInfo string
 	Expires    time.Time
@@ -33,11 +33,27 @@ func Authorized(r *http.Request, userId uuid.UUID) error {
 		return err
 	}
 
-	if userSession.Uuid != userId {
+	if userSession.UserUuid != userId {
 		return errors.New("invalid token")
 	}
 
 	return nil
+}
+
+// This function gets user's UUID by session token. Also ensures that user is authorized.
+func getUserUUIDFromToken(token string) (uuid.UUID, error) {
+	var userSession Session
+	result := DB.Where("token = ?", token).First(&userSession)
+
+	if result.Error != nil {
+		return uuid.Nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return uuid.Nil, errors.New("no such user")
+	}
+
+	return userSession.UserUuid, nil
 }
 
 func createSession(u uuid.UUID) (http.Cookie, error) {
@@ -49,7 +65,7 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 	expires := time.Now().Add(3 * time.Hour * 24 * 365)
 
 	session := Session{
-		Uuid:       u,
+		UserUuid:   u,
 		Token:      token,
 		ClientInfo: "",
 		Expires:    expires,

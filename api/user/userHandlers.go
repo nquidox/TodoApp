@@ -16,58 +16,37 @@ import (
 //	@Produce		json
 //	@Param			user	body		User	true	"Create new user"
 //	@Success		200		{object}	User
-//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
-//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
-//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user [post]
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	usr := User{}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error deserializing user: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = usr.CheckRequiredFields()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Validation error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ValidationErr, err)
 		return
 	}
 
 	err = usr.Create()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error creating user: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.UserCreateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, usr)
+	service.OkResponse(w, usr)
 }
 
 // ReadUserHandler     godoc
@@ -75,132 +54,102 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get user
 //	@Description	Get user info, uuid required
 //	@Tags			User
-//	@Security		CookieAuth
+//	@Security		BasicAuth
 //	@Produce		json
-//	@Param			id	path		string	true	"uuid"
+//	@Param			id	path		string	false	"uuid"
 //	@Success		200	{object}	User
-//	@Failure		400	{object}	service.ErrorResponse	"Bad request"
-//	@Failure		401	{object}	service.ErrorResponse	"Unauthorized"
-//	@Failure		500	{object}	service.ErrorResponse	"Internal Server Error"
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [get]
 func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userUUID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "ID parse error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	err = Authorized(r, userUUID)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusUnauthorized,
-			Messages:   "Unauthorized",
-			Data:       "",
-		})
+		service.UnauthorizedResponse(w, "")
 		return
 	}
 
 	usr := User{UserUUID: userUUID}
 	err = usr.Read()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "User read error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return
 	}
 
-	service.ServerResponse(w, usr)
+	service.OkResponse(w, usr)
 }
 
 // UpdateUserHandler     godoc
 //
 //	@Summary		Update user
-//	@Description	Update user account
+//	@Description	Update your account data
 //	@Tags			User
+//	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
+//	@Param			id		path		string	false	"uuid"
 //	@Param			user	body		User	true	"Update user"
-//	@Success		200		{object}	service.ErrorResponse
-//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
-//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
-//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Success		200		{object}	service.errorResponse
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [put]
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userUUID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "ID parse error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
+	}
+
+	if userUUID == uuid.Nil {
+		token, err := r.Cookie("token")
+		if err != nil {
+			service.UnauthorizedResponse(w, "")
+			return
+		}
+
+		userUUID, err = getUserUUIDFromToken(token.Value)
+		if err != nil {
+			service.UnauthorizedResponse(w, "")
+			return
+		}
 	}
 
 	usr := User{UserUUID: userUUID}
 
-	err = Authorized(r, userUUID)
-	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusUnauthorized,
-			Messages:   "Unauthorized",
-			Data:       "",
-		})
-		return
-	}
-
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error deserializing user: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = usr.Update()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "User update error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
-		Messages:   "User updated successfully",
-		Data:       "",
+		HttpCode:   http.StatusOK,
+		Messages:   service.UpdateOk,
+		Data:       nil,
 	})
 }
 
@@ -209,25 +158,22 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Delete user
 //	@Description	Delete user account
 //	@Tags			User
+//	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
+//	@Param			id		path		string	false	"uuid"
 //	@Param			user	body		User	true	"Delete user"
-//	@Success		200		{object}	service.ErrorResponse
-//	@Failure		400		{object}	service.ErrorResponse	"Bad request"
-//	@Failure		401		{object}	service.ErrorResponse	"Unauthorized"
-//	@Failure		500		{object}	service.ErrorResponse	"Internal Server Error"
+//	@Success		200		{object}	service.errorResponse
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [delete]
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userUUID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "ID parse error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
@@ -235,30 +181,20 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = Authorized(r, userUUID)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusUnauthorized,
-			Messages:   "Unauthorized",
-			Data:       "",
-		})
+		service.UnauthorizedResponse(w, "")
 		return
 	}
 
 	err = usr.Delete()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "User delete error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.UserDeleteErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
-		Messages:   "User deleted successfully",
-		Data:       "",
+		HttpCode:   http.StatusOK,
+		Messages:   service.DeleteOk,
+		Data:       nil,
 	})
 }

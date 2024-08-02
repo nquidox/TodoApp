@@ -9,13 +9,20 @@ import (
 type User struct {
 	gorm.Model  `json:"-"`
 	ID          int       `json:"-"`
-	Username    string    `json:"login"`
-	Name        string    `json:"name"`
-	Surname     string    `json:"surname"`
-	Email       string    `json:"email" binding:"required" example:"example@email.box"`
-	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word"`
+	Email       string    `json:"email" binding:"required" example:"example@email.box"  extensions:"x-order=1"`
+	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word"  extensions:"x-order=2"`
+	Username    string    `json:"login" extensions:"x-order=3"`
+	Name        string    `json:"name" extensions:"x-order=4"`
+	Surname     string    `json:"surname" extensions:"x-order=5"`
 	UserUUID    uuid.UUID `json:"-"`
 	IsSuperuser bool      `json:"-"`
+}
+
+type updateUser struct {
+	Username string `json:"login" extensions:"x-order=1"`
+	Email    string `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=2"`
+	Name     string `json:"name" extensions:"x-order=3"`
+	Surname  string `json:"surname" extensions:"x-order=4"`
 }
 
 type meModel struct {
@@ -32,8 +39,8 @@ type meResponse struct {
 }
 
 type loginUserModel struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" extensions:"x-order=1"`
+	Password string `json:"password" extensions:"x-order=2"`
 }
 
 func (l *User) Create() error {
@@ -55,7 +62,7 @@ func (l *User) Create() error {
 
 func (l *User) Read() error {
 	err := DB.
-		Where("uuid = ?", l.UserUUID).
+		Where("user_uuid = ?", l.UserUUID).
 		First(l).Error
 	if err != nil {
 		return err
@@ -67,7 +74,7 @@ func (l *User) Update() error {
 	var err error
 
 	err = DB.
-		Where("uuid = ?", l.UserUUID).
+		Where("user_uuid = ?", l.UserUUID).
 		Updates(l).
 		Error
 	if err != nil {
@@ -79,7 +86,7 @@ func (l *User) Update() error {
 
 func (l *User) Delete() error {
 	result := DB.
-		Where("uuid = ?", l.UserUUID).
+		Where("user_uuid = ?", l.UserUUID).
 		Delete(l)
 
 	if result.Error != nil {

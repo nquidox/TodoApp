@@ -12,23 +12,13 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
@@ -36,38 +26,23 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "JSON read error: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = task.validateTitle()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Validation error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ValidationErr, err)
 		return
 	}
 
 	err = task.Create()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Create task error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, task)
+	service.OkResponse(w, task)
 }
 
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,28 +54,18 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	tasks := Task{TodoListId: id}
 	read, err := tasks.Read(count, page)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Tasks read error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.TaskReadErr, err)
 		return
 	}
 
-	service.ServerResponse(w, read)
+	service.OkResponse(w, read)
 }
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -108,34 +73,19 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	taskId, err := uuid.Parse(r.PathValue("taskId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error reading body: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.BodyReadErr, err)
 		return
 	}
 
@@ -143,38 +93,23 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "JSON read error: " + err.Error(),
-			Data:       "",
-		})
+		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = task.validateTitle()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Validation error: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ValidationErr, err)
 		return
 	}
 
 	err = task.Update()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Task update error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
 		return
 	}
 
-	service.ServerResponse(w, task)
+	service.OkResponse(w, task)
 }
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,41 +117,26 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	taskId, err := uuid.Parse(r.PathValue("taskId"))
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusBadRequest,
-			Messages:   "Error parsing id: " + err.Error(),
-			Data:       "",
-		})
+		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
 
 	t := Task{TodoListId: listId, TaskId: taskId}
 	err = t.Delete()
 	if err != nil {
-		service.ServerResponse(w, service.ErrorResponse{
-			ResultCode: 1,
-			ErrorCode:  http.StatusInternalServerError,
-			Messages:   "Delete error: " + err.Error(),
-			Data:       "",
-		})
+		service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
 		return
 	}
 
-	service.ServerResponse(w, service.ErrorResponse{
+	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		ErrorCode:  http.StatusOK,
+		HttpCode:   http.StatusOK,
 		Messages:   "",
 		Data:       "",
 	})
