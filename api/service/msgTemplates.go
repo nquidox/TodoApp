@@ -21,6 +21,7 @@ const (
 	SessionCreateErr = "Session create error"
 	SessionCloseErr  = "Session close error"
 	CookieReadErr    = "Cookie read error"
+	InvalidTokenErr  = "Invalid token"
 
 	/* TODO Lists Errors */
 
@@ -43,7 +44,8 @@ const (
 
 	/* DB Errors */
 
-	DBReadErr = "Error reading from DB"
+	DBReadErr  = "Error reading from DB"
+	DBNotFound = "record not found"
 
 	/* OK Messages */
 

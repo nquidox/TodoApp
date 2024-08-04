@@ -35,7 +35,7 @@ func OkResponse(w http.ResponseWriter, data interface{}) {
 	serverResponse(w, data)
 }
 
-func BadRequestResponse(w http.ResponseWriter, errType string, errMsg error) {
+func BadRequestResponse(w http.ResponseWriter, errType string, errMsg any) {
 	serverResponse(w, errorResponse{
 		ResultCode: 1,
 		HttpCode:   http.StatusBadRequest,
