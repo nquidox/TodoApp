@@ -28,18 +28,16 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s := Session{}
-	err = DB.Where("token = ?", token.Value).First(&s).Error
-	if err != nil {
+	t, meUUID := tokenIsValid(token.Value)
+	if !t {
 		service.UnauthorizedResponse(w, "")
 		return
 	}
 
-	me := meModel{UserUUID: s.UserUuid}
-	err = DB.Model(User{}).Where("user_uuid = ?", s.UserUuid).First(&me).Error
+	me := meModel{UserUUID: meUUID}
+	err = me.Read()
 	if err != nil {
-		service.InternalServerErrorResponse(w, service.DBReadErr, err)
-		return
+		service.BadRequestResponse(w, service.UserReadErr, err)
 	}
 
 	service.OkResponse(w, meResponse{
@@ -135,6 +133,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
 		service.BadRequestResponse(w, service.CookieReadErr, err)
+		return
+	}
+
+	if t, _ := tokenIsValid(cookie.Value); !t {
+		service.UnauthorizedResponse(w, service.InvalidTokenErr)
 		return
 	}
 

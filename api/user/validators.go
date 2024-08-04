@@ -2,12 +2,12 @@ package user
 
 import "errors"
 
-func (l *User) CheckRequiredFields() error {
-	if l.Email == "" {
+func (u *User) CheckRequiredFields() error {
+	if u.Email == "" {
 		return errors.New("email is required")
 	}
 
-	if l.Password == "" {
+	if u.Password == "" {
 		return errors.New("password is required")
 	}
 	return nil

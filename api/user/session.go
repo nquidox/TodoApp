@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"time"
 )
@@ -21,39 +22,29 @@ type Session struct {
 	Expires    time.Time
 }
 
-func Authorized(r *http.Request, userId uuid.UUID) error {
-	var userSession Session
+func getTokenValue(r *http.Request) (string, error) {
 	token, err := r.Cookie("token")
 	if err != nil {
-		return err
+		log.Println(err)
+		return "", err
 	}
-
-	err = DB.Where("token = ?", token.Value).First(&userSession).Error
-	if err != nil {
-		return err
-	}
-
-	if userSession.UserUuid != userId {
-		return errors.New("invalid token")
-	}
-
-	return nil
+	return token.Value, nil
 }
 
-// This function gets user's UUID by session token. Also ensures that user is authorized.
-func getUserUUIDFromToken(token string) (uuid.UUID, error) {
-	var userSession Session
-	result := DB.Where("token = ?", token).First(&userSession)
+func tokenIsValid(token string) (bool, uuid.UUID) {
+	var s Session
+	result := DB.Where("token = ?", token).First(&s)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, uuid.Nil
+	}
 
 	if result.Error != nil {
-		return uuid.Nil, result.Error
+		log.Println(result.Error)
+		return false, uuid.Nil
 	}
 
-	if result.RowsAffected == 0 {
-		return uuid.Nil, errors.New("no such user")
-	}
-
-	return userSession.UserUuid, nil
+	return true, s.UserUuid
 }
 
 func createSession(u uuid.UUID) (http.Cookie, error) {

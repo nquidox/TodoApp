@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"io"
+	"log"
 	"net/http"
 	"todoApp/api/service"
 )
@@ -65,21 +66,12 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userUUID, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		return
-	}
+	target := targetUUID(w, r)
 
-	err = Authorized(r, userUUID)
+	usr := User{UserUUID: target}
+	err := usr.Read()
 	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		return
-	}
-
-	usr := User{UserUUID: userUUID}
-	err = usr.Read()
-	if err != nil {
+		log.Println("Error parsed reading user", err.Error())
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return
 	}
@@ -95,8 +87,8 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	false	"uuid"
-//	@Param			user	body		User	true	"Update user"
+//	@Param			id		path		string		false	"uuid"
+//	@Param			user	body		updateUser	true	"Update user"
 //	@Success		200		{object}	service.errorResponse
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
@@ -105,27 +97,9 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userUUID, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		return
-	}
+	target := targetUUID(w, r)
 
-	if userUUID == uuid.Nil {
-		token, err := r.Cookie("token")
-		if err != nil {
-			service.UnauthorizedResponse(w, "")
-			return
-		}
-
-		userUUID, err = getUserUUIDFromToken(token.Value)
-		if err != nil {
-			service.UnauthorizedResponse(w, "")
-			return
-		}
-	}
-
-	usr := User{UserUUID: userUUID}
+	usr := updateUser{UserUUID: target}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -161,31 +135,19 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	false	"uuid"
-//	@Param			user	body		User	true	"Delete user"
-//	@Success		200		{object}	service.errorResponse
-//	@Failure		400		{object}	service.errorResponse	"Bad request"
-//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
-//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
+//	@Param			id	path	string	false	"uuid"
+//	@Success		204
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [delete]
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userUUID, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		return
-	}
+	target := targetUUID(w, r)
+	usr := User{UserUUID: target}
 
-	usr := User{UserUUID: userUUID}
-
-	err = Authorized(r, userUUID)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		return
-	}
-
-	err = usr.Delete()
+	err := usr.Delete()
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserDeleteErr, err)
 		return
@@ -197,4 +159,44 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		Messages:   service.DeleteOk,
 		Data:       nil,
 	})
+}
+
+func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
+	token, err := getTokenValue(r)
+	if err != nil {
+		log.Println("Error getting token", err.Error())
+		service.BadRequestResponse(w, service.CookieReadErr, err)
+		return uuid.Nil
+	}
+
+	t, userUUID := tokenIsValid(token)
+	if !t {
+		log.Println("Error validating token", err)
+		service.UnauthorizedResponse(w, "")
+		return uuid.Nil
+	}
+
+	id := r.PathValue("id")
+	parsedUUID := uuid.Nil
+
+	if id != "" {
+		parsedUUID, err = uuid.Parse(id)
+		if err != nil {
+			log.Println("Error parsing uuid", err, "Ignoring")
+		}
+	}
+
+	usr := User{UserUUID: userUUID}
+	err = usr.Read()
+	if err != nil {
+		log.Println("Error reading user", err.Error())
+		service.InternalServerErrorResponse(w, service.UserReadErr, err)
+		return uuid.Nil
+	}
+
+	if usr.IsSuperuser && parsedUUID != uuid.Nil {
+		return parsedUUID
+	}
+
+	return userUUID
 }
