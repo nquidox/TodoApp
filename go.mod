@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.24.0
 	gorm.io/driver/postgres v1.5.9
@@ -26,7 +27,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/http-swagger v1.3.4 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
