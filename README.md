@@ -17,6 +17,10 @@ DB_SSLMODE=disable
 # HTTP Server params
 HTTP_HOST=localhost
 HTTP_PORT=9000
+
+# Logger levels
+APP_LOG_LEVEL=info
+DB_LOG_LEVEL=silent
 ```
 
 ## License
