@@ -18,10 +18,13 @@ const (
 
 	/* Session Errors */
 
-	SessionCreateErr = "Session create error"
-	SessionCloseErr  = "Session close error"
-	CookieReadErr    = "Cookie read error"
-	InvalidTokenErr  = "Invalid token"
+	SessionCreateErr   = "Session create error"
+	SessionCloseErr    = "Session close error"
+	CookieReadErr      = "Cookie read error"
+	InvalidTokenErr    = "Invalid token"
+	TokenReadErr       = "Error getting token"
+	TokenValidationErr = "Error validating token"
+	UUIDParseErr       = "Error parsing uuid"
 
 	/* TODO Lists Errors */
 
@@ -49,6 +52,8 @@ const (
 
 	/* OK Messages */
 
-	UpdateOk = "User updated successfully"
-	DeleteOk = "User deleted successfully"
+	UserCreateSuccess = "User created successfully"
+	UserReadSuccess   = "User read successfully"
+	UserUpdateSuccess = "User updated successfully"
+	UserDeleteSuccess = "User deleted successfully"
 )

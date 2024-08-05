@@ -2,10 +2,10 @@ package db
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
 	"todoApp/config"
 )
 
@@ -21,7 +21,10 @@ func ConnectToDB(c *config.Config) *gorm.DB {
 	case "warn":
 		level = logger.Warn
 	default:
-		level = logger.Info
+		{
+			level = logger.Info
+			log.Warning("Error parsing database level, using default: Info")
+		}
 	}
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",

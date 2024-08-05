@@ -2,8 +2,8 @@ package user
 
 import (
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net/http"
 	"todoApp/api/service"
 )
@@ -26,28 +26,38 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.BadRequestResponse(w, service.BodyReadErr, err)
+		log.Error(service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
 		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		log.Error(service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = usr.CheckRequiredFields()
 	if err != nil {
 		service.BadRequestResponse(w, service.ValidationErr, err)
+		log.Error(service.ValidationErr, err)
 		return
 	}
 
 	err = usr.Create()
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserCreateErr, err)
+		log.Error(service.UserCreateErr, err)
 		return
 	}
 
 	service.OkResponse(w, usr)
+
+	log.WithFields(log.Fields{
+		"id":       usr.UserUUID,
+		"username": usr.Username,
+		"email":    usr.Email,
+	}).Info(service.UserCreateSuccess)
 }
 
 // ReadUserHandler     godoc
@@ -71,12 +81,17 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	usr := User{UserUUID: target}
 	err := usr.Read()
 	if err != nil {
-		log.Println("Error parsed reading user", err.Error())
+		log.Error(service.UserReadErr, err)
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return
 	}
 
 	service.OkResponse(w, usr)
+	log.WithFields(log.Fields{
+		"id":       usr.UserUUID,
+		"username": usr.Username,
+		"email":    usr.Email,
+	}).Info(service.UserReadSuccess)
 }
 
 // UpdateUserHandler     godoc
@@ -104,27 +119,36 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.BadRequestResponse(w, service.BodyReadErr, err)
+		log.Error(service.BodyReadErr, err)
 		return
 	}
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
 		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		log.Error(service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = usr.Update()
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
+		log.Error(service.UserUpdateErr, err)
 		return
 	}
 
 	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
 		HttpCode:   http.StatusOK,
-		Messages:   service.UpdateOk,
+		Messages:   service.UserUpdateSuccess,
 		Data:       nil,
 	})
+
+	log.WithFields(log.Fields{
+		"id":       usr.UserUUID,
+		"username": usr.Username,
+		"email":    usr.Email,
+	}).Info(service.UserUpdateSuccess)
 }
 
 // DeleteUserHandler     godoc
@@ -156,22 +180,26 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
 		HttpCode:   http.StatusOK,
-		Messages:   service.DeleteOk,
+		Messages:   service.UserDeleteSuccess,
 		Data:       nil,
 	})
+
+	log.WithFields(log.Fields{
+		"id": usr.UserUUID,
+	}).Info(service.UserDeleteSuccess)
 }
 
 func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	token, err := getTokenValue(r)
 	if err != nil {
-		log.Println("Error getting token", err.Error())
+		log.Error(service.TokenReadErr, err.Error())
 		service.BadRequestResponse(w, service.CookieReadErr, err)
 		return uuid.Nil
 	}
 
 	t, userUUID := tokenIsValid(token)
 	if !t {
-		log.Println("Error validating token", err)
+		log.Error(service.TokenValidationErr, err)
 		service.UnauthorizedResponse(w, "")
 		return uuid.Nil
 	}
@@ -182,14 +210,14 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	if id != "" {
 		parsedUUID, err = uuid.Parse(id)
 		if err != nil {
-			log.Println("Error parsing uuid", err, "Ignoring")
+			log.Warning(service.UUIDParseErr, err, "ignoring")
 		}
 	}
 
 	usr := User{UserUUID: userUUID}
 	err = usr.Read()
 	if err != nil {
-		log.Println("Error reading user", err.Error())
+		log.Error(service.UserReadErr, err.Error())
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return uuid.Nil
 	}
