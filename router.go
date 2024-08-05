@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"log"
 	"net/http"
 	"todoApp/api/todoList"
 	"todoApp/api/user"
@@ -31,7 +31,7 @@ func (s *ApiServer) Run() error {
 	user.AddRoutes(router)
 	todoList.AddRoutes(router)
 
-	log.Printf("Starting server on %s", s.Addr)
+	log.Info("Starting server on ", s.Addr)
 	return server.ListenAndServe()
 }
 
