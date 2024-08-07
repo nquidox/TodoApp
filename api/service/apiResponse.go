@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -22,11 +23,13 @@ type errorResponse struct {
 func serverResponse(w http.ResponseWriter, dataInterface interface{}) {
 	bytes, err := SerializeJSON(dataInterface)
 	if err != nil {
+		log.WithFields(log.Fields{JSONSerializingErr: err}).Error(ServerResponseErr)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	_, err = w.Write(bytes)
 	if err != nil {
+		log.WithFields(log.Fields{WriteBytesErr: err}).Error(ServerResponseErr)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

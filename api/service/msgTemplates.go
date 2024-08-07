@@ -3,9 +3,11 @@ package service
 const (
 	/* Errors */
 
-	ParseErr      = "ID parse error"
-	ValidationErr = "Validation error"
-	BodyReadErr   = "Body read error"
+	ParseErr          = "ID parse error"
+	ValidationErr     = "Validation error"
+	BodyReadErr       = "Body read error"
+	ServerResponseErr = "Server response error"
+	WriteBytesErr     = "Error sending data"
 
 	/* User Errors */
 
@@ -43,6 +45,7 @@ const (
 	/* JSON Errors */
 
 	JSONReadErr          = "JSON read error"
+	JSONSerializingErr   = "Serializing error"
 	JSONDeserializingErr = "Deserializing error"
 
 	/* DB Errors */
