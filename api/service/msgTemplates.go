@@ -56,4 +56,14 @@ const (
 	UserReadSuccess   = "User read successfully"
 	UserUpdateSuccess = "User updated successfully"
 	UserDeleteSuccess = "User deleted successfully"
+
+	TodoListCreateSuccess = "Todo list created successfully"
+	TodoListReadSuccess   = "Todo list read successfully"
+	TodoListUpdateSuccess = "Todo list updated successfully"
+	TodoListDeleteSuccess = "Todo list deleted successfully"
+
+	TaskCreateSuccess = "Task created successfully"
+	TaskReadSuccess   = "Task read successfully"
+	TaskUpdateSuccess = "Task updated successfully"
+	TaskDeleteSuccess = "Task deleted successfully"
 )
