@@ -61,7 +61,8 @@ func (u *User) Create() error {
 }
 
 func (u *User) Read() error {
-	err := Worker.ReadOneRecord(u, "user_uuid", u.UserUUID)
+	params := map[string]any{"field": "user_uuid", "user_uuid": u.UserUUID}
+	err := Worker.ReadOneRecord(u, params)
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,8 @@ func (u *User) Read() error {
 }
 
 func (u *updateUser) Update() error {
-	err := Worker.UpdateRecord(u, "user_uuid", u.UserUUID)
+	params := map[string]any{"field": "user_uuid", "user_uuid": u.UserUUID}
+	err := Worker.UpdateRecord(u, params)
 	if err != nil {
 		return err
 	}
@@ -77,7 +79,8 @@ func (u *updateUser) Update() error {
 }
 
 func (u *User) Delete() error {
-	err := Worker.DeleteRecord(u, "user_uuid", u.UserUUID)
+	params := map[string]any{"field": "user_uuid", "user_uuid": u.UserUUID}
+	err := Worker.DeleteRecord(u, params)
 	if err != nil {
 		return err
 	}
@@ -86,7 +89,8 @@ func (u *User) Delete() error {
 
 func (m *meModel) Read() error {
 	var usr User
-	err := Worker.ReadOneRecord(&usr, "user_uuid", m.UserUUID)
+	params := map[string]any{"field": "user_uuid", "user_uuid": m.UserUUID}
+	err := Worker.ReadOneRecord(&usr, params)
 
 	m.Email = usr.Email
 	m.Username = usr.Username

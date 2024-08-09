@@ -59,7 +59,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
 		"id":       me.UserUUID,
 		"username": me.Username,
-	}).Info(service.UserReadSuccess)
+	}).Info("/me ", service.UserReadSuccess)
 }
 
 // LoginHandler     godoc
@@ -169,7 +169,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func getUser(email string) (User, error) {
 	var user User
-	err := Worker.ReadOneRecord(&user, "email", email)
+	params := map[string]any{"field": "email", "email": email}
+	err := Worker.ReadOneRecord(&user, params)
 	if err != nil {
 		return user, err
 	}

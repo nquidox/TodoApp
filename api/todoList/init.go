@@ -1,22 +1,32 @@
 package todoList
 
 import (
-	"gorm.io/gorm"
 	"log"
+	"todoApp/api/service"
 )
 
-var DB *gorm.DB
+type DatabaseWorker interface {
+	InitTable(model any) error
+	CreateRecord(model any) error
+	ReadOneRecord(model any, params map[string]any) error
+	ReadManyRecords(model any) error
+	ReadWithPagination(model any, params map[string]any) error
+	UpdateRecord(model any, params map[string]any) error
+	DeleteRecord(model any, params map[string]any) error
+}
 
-func Init(d *gorm.DB) {
-	DB = d
+var Worker DatabaseWorker
 
-	err := DB.AutoMigrate(&TodoList{})
+func Init() {
+	var err error
+
+	err = Worker.InitTable(&TodoList{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = DB.AutoMigrate(&Task{})
+	err = Worker.InitTable(&Task{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(service.TableInitErr, err)
 	}
 }

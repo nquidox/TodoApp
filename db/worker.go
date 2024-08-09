@@ -12,10 +12,11 @@ import (
 type DatabaseWorker interface {
 	InitTable(model any) error
 	CreateRecord(model any) error
-	ReadOneRecord(model any, field string, value any) error
+	ReadOneRecord(model any, params map[string]any) error
 	ReadManyRecords(model any) error
-	UpdateRecord(model any, field string, value any) error
-	DeleteRecord(model any, field string, value any) error
+	ReadWithPagination(model any, params map[string]any) error
+	UpdateRecord(model any, params map[string]any) error
+	DeleteRecord(model any, params map[string]any) error
 }
 
 type DB struct {
@@ -38,11 +39,14 @@ func (db *DB) CreateRecord(model any) error {
 	return nil
 }
 
-func (db *DB) ReadOneRecord(model any, field string, value any) error {
-	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", field), value).
-		First(model).
-		Error
+func (db *DB) ReadOneRecord(model any, params map[string]any) error {
+	query := db.Connection
+
+	for key, value := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+	}
+
+	err := query.First(model).Error
 	if err != nil {
 		return err
 	}
@@ -50,12 +54,31 @@ func (db *DB) ReadOneRecord(model any, field string, value any) error {
 }
 
 func (db *DB) ReadManyRecords(model any) error {
+	err := db.Connection.Find(model).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (db *DB) UpdateRecord(model any, field string, value any) error {
+func (db *DB) ReadWithPagination(model any, params map[string]any) error {
 	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", field), value).
+		Where(fmt.Sprintf("%s = ?", params["field"])).
+		Offset((params["page"]).(int) - 1*params["count"].(int)).
+		Limit(params["count"].(int)).
+		Find(model).
+		Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *DB) UpdateRecord(model any, params map[string]any) error {
+	err := db.Connection.
+		Where(fmt.Sprintf("%s = ?", params["field"]), params[params["field"].(string)]).
 		Updates(model).
 		Error
 	if err != nil {
@@ -64,9 +87,9 @@ func (db *DB) UpdateRecord(model any, field string, value any) error {
 	return nil
 }
 
-func (db *DB) DeleteRecord(model any, field string, value any) error {
+func (db *DB) DeleteRecord(model any, params map[string]any) error {
 	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", field), value).
+		Where(fmt.Sprintf("%s = ?", params["field"]), params[params["field"].(string)]).
 		Delete(model).
 		Error
 	if err != nil {

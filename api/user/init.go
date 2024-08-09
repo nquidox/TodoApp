@@ -8,10 +8,10 @@ import (
 type DatabaseWorker interface {
 	InitTable(model any) error
 	CreateRecord(model any) error
-	ReadOneRecord(model any, field string, value any) error
+	ReadOneRecord(model any, params map[string]any) error
 	ReadManyRecords(model any) error
-	UpdateRecord(model any, field string, value any) error
-	DeleteRecord(model any, field string, value any) error
+	UpdateRecord(model any, params map[string]any) error
+	DeleteRecord(model any, params map[string]any) error
 }
 
 var Worker DatabaseWorker

@@ -1,7 +1,6 @@
 package todoList
 
 import (
-	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
@@ -23,8 +22,6 @@ type Task struct {
 }
 
 func (t *Task) Create() error {
-	var err error
-
 	t.Description = ""
 	t.Completed = "false"
 	t.Status = 0
@@ -35,7 +32,7 @@ func (t *Task) Create() error {
 	t.Order = 0
 	t.AddedDate = time.Now()
 
-	err = DB.Create(t).Error
+	err := Worker.CreateRecord(t)
 	if err != nil {
 		return err
 	}
@@ -45,53 +42,24 @@ func (t *Task) Create() error {
 
 func (t *Task) Read(count, page int) ([]Task, error) {
 	var tasks []Task
-
-	result := DB.
-		Where("todo_list_id = ?", t.TodoListId).
-		Offset((page - 1) * count).
-		Limit(count).
-		Find(&tasks)
-
-	if result.Error != nil {
-		return nil, result.Error
+	params := map[string]any{"field": "todo_list_id", "count": count, "page": page}
+	err := Worker.ReadWithPagination(&tasks, params)
+	if err != nil {
+		return nil, err
 	}
-
-	if result.RowsAffected == 0 {
-		return nil, errors.New("not found")
-	}
-
 	return tasks, nil
 }
 
 func (t *Task) Update() error {
-	result := DB.
-		Where("todo_list_id = ?", t.TodoListId).
-		Where("task_id = ?", t.TaskId).
-		Updates(t)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("not found")
-	}
-
+	//TODO: implement a structure to pass several parameters to worker
+	//"todo_list_id"
+	//"task_id"
 	return nil
 }
 
 func (t *Task) Delete() error {
-	result := DB.
-		Where("todo_list_id = ?", t.TodoListId).
-		Where("task_id = ?", t.TaskId).
-		Delete(t)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("not found")
-	}
+	//TODO: implement a structure to pass several parameters to worker
+	//"todo_list_id"
+	//"task_id"
 	return nil
 }

@@ -1,7 +1,6 @@
 package todoList
 
 import (
-	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
@@ -25,7 +24,7 @@ func (t *TodoList) Create() error {
 	t.AddedDate = time.Now()
 	t.Order = 0
 
-	err := DB.Create(t).Error
+	err := Worker.CreateRecord(t)
 	if err != nil {
 		return err
 	}
@@ -35,7 +34,7 @@ func (t *TodoList) Create() error {
 
 func (t *TodoList) GetAllLists() ([]TodoList, error) {
 	var allLists []TodoList
-	err := DB.Find(&allLists).Error
+	err := Worker.ReadManyRecords(&allLists)
 	if err != nil {
 		return nil, err
 	}
@@ -43,27 +42,19 @@ func (t *TodoList) GetAllLists() ([]TodoList, error) {
 }
 
 func (t *TodoList) Update() error {
-	result := DB.Where("uuid = ?", t.Uuid).Updates(t)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("list not found")
+	params := map[string]any{"field": "uuid", "uuid": t.Uuid}
+	err := Worker.UpdateRecord(t, params)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func (t *TodoList) Delete() error {
-	result := DB.Where("uuid = ?", t.Uuid).Delete(t)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("list not found")
+	params := map[string]any{"field": "uuid", "uuid": t.Uuid}
+	err := Worker.DeleteRecord(t, params)
+	if err != nil {
+		return err
 	}
 	return nil
 }
