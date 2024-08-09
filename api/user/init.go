@@ -1,21 +1,31 @@
 package user
 
 import (
-	"gorm.io/gorm"
-	"log"
+	log "github.com/sirupsen/logrus"
+	"todoApp/api/service"
 )
 
-var DB *gorm.DB
+type DatabaseWorker interface {
+	InitTable(model any) error
+	CreateRecord(model any) error
+	ReadOneRecord(model any, field string, value any) error
+	ReadManyRecords(model any) error
+	UpdateRecord(model any, field string, value any) error
+	DeleteRecord(model any, field string, value any) error
+}
 
-func Init(d *gorm.DB) {
-	DB = d
-	err := DB.AutoMigrate(&User{})
+var Worker DatabaseWorker
+
+func Init() {
+	var err error
+
+	err = Worker.InitTable(&User{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = DB.AutoMigrate(&Session{})
+	err = Worker.InitTable(&Session{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(service.TableInitErr, err)
 	}
 }

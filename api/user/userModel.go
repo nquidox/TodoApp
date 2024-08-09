@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -54,7 +53,7 @@ func (u *User) Create() error {
 		return err
 	}
 
-	err = DB.Create(u).Error
+	err = Worker.CreateRecord(u)
 	if err != nil {
 		return err
 	}
@@ -62,9 +61,7 @@ func (u *User) Create() error {
 }
 
 func (u *User) Read() error {
-	err := DB.
-		Where("user_uuid = ?", u.UserUUID).
-		First(u).Error
+	err := Worker.ReadOneRecord(u, "user_uuid", u.UserUUID)
 	if err != nil {
 		return err
 	}
@@ -72,46 +69,30 @@ func (u *User) Read() error {
 }
 
 func (u *updateUser) Update() error {
-	var err error
-
-	err = DB.
-		Model(User{}).
-		Where("user_uuid = ?", u.UserUUID).
-		Updates(u).
-		Error
+	err := Worker.UpdateRecord(u, "user_uuid", u.UserUUID)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (u *User) Delete() error {
-	result := DB.
-		Where("user_uuid = ?", u.UserUUID).
-		Delete(u)
-
-	if result.Error != nil {
-		return result.Error
+	err := Worker.DeleteRecord(u, "user_uuid", u.UserUUID)
+	if err != nil {
+		return err
 	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("user not found")
-	}
-
 	return nil
 }
 
 func (m *meModel) Read() error {
-	result := DB.Model(User{}).Where("user_uuid = ?", m.UserUUID).First(m)
+	var usr User
+	err := Worker.ReadOneRecord(&usr, "user_uuid", m.UserUUID)
 
-	if result.RowsAffected == 0 {
-		return errors.New("user not found")
+	m.Email = usr.Email
+	m.Username = usr.Username
+
+	if err != nil {
+		return err
 	}
-
-	if result.Error != nil {
-		return result.Error
-	}
-
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"log"
+
 	"net/http"
 	"time"
 )
@@ -25,7 +25,6 @@ type Session struct {
 func getTokenValue(r *http.Request) (string, error) {
 	token, err := r.Cookie("token")
 	if err != nil {
-		log.Println(err)
 		return "", err
 	}
 	return token.Value, nil
@@ -33,14 +32,13 @@ func getTokenValue(r *http.Request) (string, error) {
 
 func tokenIsValid(token string) (bool, uuid.UUID) {
 	var s Session
-	result := DB.Where("token = ?", token).First(&s)
+	err := Worker.ReadOneRecord(&s, "token", token)
 
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, uuid.Nil
 	}
 
-	if result.Error != nil {
-		log.Println(result.Error)
+	if err != nil {
 		return false, uuid.Nil
 	}
 
@@ -62,7 +60,7 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 		Expires:    expires,
 	}
 
-	err = DB.Create(&session).Error
+	err = Worker.CreateRecord(&session)
 	if err != nil {
 		return http.Cookie{}, err
 	}
@@ -77,11 +75,12 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 
 func dropSession(cookieToken string) error {
 	var session Session
-	err := DB.Where("token = ?", cookieToken).First(&session).Error
+	err := Worker.ReadOneRecord(&session, "token", cookieToken)
 	if err != nil {
 		return err
 	}
-	err = DB.Delete(&session).Error
+
+	err = Worker.DeleteRecord(&session, "token", cookieToken)
 	if err != nil {
 		return err
 	}

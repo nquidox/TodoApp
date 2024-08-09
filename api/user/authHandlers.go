@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"todoApp/api/service"
@@ -25,12 +26,14 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	token, err := r.Cookie("token")
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err)
 		return
 	}
 
 	t, meUUID := tokenIsValid(token.Value)
 	if !t {
 		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenValidationErr, err)
 		return
 	}
 
@@ -38,6 +41,8 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	err = me.Read()
 	if err != nil {
 		service.BadRequestResponse(w, service.UserReadErr, err)
+		log.Error(service.UserReadErr, err)
+		return
 	}
 
 	service.OkResponse(w, meResponse{
@@ -50,6 +55,11 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 			Username: me.Username,
 		},
 	})
+
+	log.WithFields(log.Fields{
+		"id":       me.UserUUID,
+		"username": me.Username,
+	}).Info(service.UserReadSuccess)
 }
 
 // LoginHandler     godoc
@@ -116,6 +126,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Messages:   "",
 		Data:       uuidOnly{UUID: getUsr.UserUUID},
 	})
+
+	log.WithFields(log.Fields{
+		"id":       getUsr.UserUUID,
+		"username": getUsr.Username,
+	}).Info(service.LoginSuccess)
 }
 
 // LogoutHandler     godoc
@@ -146,15 +161,17 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		service.InternalServerErrorResponse(w, service.SessionCloseErr, err)
 		return
 	}
+
+	log.WithFields(log.Fields{
+		"session": cookie.Value,
+	}).Info(service.LogoutSuccess)
 }
 
 func getUser(email string) (User, error) {
 	var user User
-	err := DB.Where("email = ?", email).First(&user).Error
-
+	err := Worker.ReadOneRecord(&user, "email", email)
 	if err != nil {
 		return user, err
 	}
-
 	return user, nil
 }

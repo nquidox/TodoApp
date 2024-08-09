@@ -11,7 +11,7 @@ import (
 // CreateUserHandler     godoc
 //
 //	@Summary		Create user
-//	@Description	Create new user account
+//	@Description	Creates new user account.
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
@@ -63,7 +63,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 // ReadUserHandler     godoc
 //
 //	@Summary		Get user
-//	@Description	Get user info, uuid required
+//	@Description	Returns user info. UUID is optional for superusers.
 //	@Tags			User
 //	@Security		BasicAuth
 //	@Produce		json
@@ -97,7 +97,7 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 // UpdateUserHandler     godoc
 //
 //	@Summary		Update user
-//	@Description	Update your account data
+//	@Description	Updates your account data. UUID is optional for superusers.
 //	@Tags			User
 //	@Security		BasicAuth
 //	@Accept			json
@@ -154,7 +154,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 // DeleteUserHandler     godoc
 //
 //	@Summary		Delete user
-//	@Description	Delete user account
+//	@Description	Deletes user account. UUID is optional for superusers.
 //	@Tags			User
 //	@Security		BasicAuth
 //	@Accept			json

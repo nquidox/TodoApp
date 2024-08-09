@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
-	"todoApp/api/todoList"
 	"todoApp/api/user"
 	"todoApp/config"
 	"todoApp/db"
@@ -42,9 +41,10 @@ func main() {
 
 	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
 
-	DB := db.ConnectToDB(c)
-	user.Init(DB)
-	todoList.Init(DB)
+	var worker db.DatabaseWorker = &db.DB{Connection: db.ConnectToDB(c)}
+	user.Worker = worker
+	user.Init()
+	//todoList.Init(DB)
 
 	server := NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort)
 

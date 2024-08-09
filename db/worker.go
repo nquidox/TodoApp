@@ -9,6 +9,72 @@ import (
 	"todoApp/config"
 )
 
+type DatabaseWorker interface {
+	InitTable(model any) error
+	CreateRecord(model any) error
+	ReadOneRecord(model any, field string, value any) error
+	ReadManyRecords(model any) error
+	UpdateRecord(model any, field string, value any) error
+	DeleteRecord(model any, field string, value any) error
+}
+
+type DB struct {
+	Connection *gorm.DB
+}
+
+func (db *DB) InitTable(model any) error {
+	err := db.Connection.AutoMigrate(model)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DB) CreateRecord(model any) error {
+	err := db.Connection.Create(model).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DB) ReadOneRecord(model any, field string, value any) error {
+	err := db.Connection.
+		Where(fmt.Sprintf("%s = ?", field), value).
+		First(model).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DB) ReadManyRecords(model any) error {
+	return nil
+}
+
+func (db *DB) UpdateRecord(model any, field string, value any) error {
+	err := db.Connection.
+		Where(fmt.Sprintf("%s = ?", field), value).
+		Updates(model).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DB) DeleteRecord(model any, field string, value any) error {
+	err := db.Connection.
+		Where(fmt.Sprintf("%s = ?", field), value).
+		Delete(model).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func ConnectToDB(c *config.Config) *gorm.DB {
 	var level logger.LogLevel
 	var err error
