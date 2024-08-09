@@ -50,10 +50,14 @@ const (
 
 	/* DB Errors */
 
-	DBReadErr  = "Error reading from DB"
-	DBNotFound = "record not found"
+	TableInitErr = "Table init error"
+	DBReadErr    = "Error reading from DB"
+	DBNotFound   = "record not found"
 
 	/* OK Messages */
+
+	LoginSuccess  = "Login success"
+	LogoutSuccess = "Logout success"
 
 	UserCreateSuccess = "User created successfully"
 	UserReadSuccess   = "User read successfully"
