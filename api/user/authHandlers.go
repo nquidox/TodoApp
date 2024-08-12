@@ -81,6 +81,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		service.BadRequestResponse(w, service.JSONReadErr, err)
+		log.Error(service.JSONReadErr, err)
 		return
 	}
 
@@ -88,30 +89,35 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
 		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		log.Error(service.JSONDeserializingErr, err)
 		return
 	}
 
 	err = usr.CheckRequiredFields()
 	if err != nil {
 		service.BadRequestResponse(w, service.ValidationErr, err)
+		log.Error(service.ValidationErr, err)
 		return
 	}
 
 	getUsr, err := getUser(usr.Email)
 	if err != nil {
 		service.BadRequestResponse(w, service.EmailErr, err)
+		log.Error(service.EmailErr, err)
 		return
 	}
 
 	err = comparePasswords(getUsr.Password, usr.Password)
 	if err != nil {
 		service.BadRequestResponse(w, service.PasswordErr, err)
+		log.Error(service.PasswordErr, err)
 		return
 	}
 
 	cookie, err := createSession(getUsr.UserUUID)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
+		log.Error(service.SessionCreateErr, err)
 		return
 	}
 
@@ -148,17 +154,20 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
 		service.BadRequestResponse(w, service.CookieReadErr, err)
+		log.Error(service.CookieReadErr, err)
 		return
 	}
 
 	if t, _ := tokenIsValid(cookie.Value); !t {
 		service.UnauthorizedResponse(w, service.InvalidTokenErr)
+		log.Error(service.InvalidTokenErr)
 		return
 	}
 
 	err = dropSession(cookie.Value)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCloseErr, err)
+		log.Error(service.SessionCloseErr, err)
 		return
 	}
 

@@ -5,11 +5,11 @@ import (
 	"strconv"
 )
 
-func (t *TodoList) validateTitle() error {
-	if len(t.Title) < 1 {
+func (c *createTodoList) validateTitle() error {
+	if len(c.Title) < 1 {
 		return errors.New("list has no title")
 	}
-	if len(t.Title) > 100 {
+	if len(c.Title) > 100 {
 		return errors.New("title is too long (MAX=100)")
 	}
 	return nil

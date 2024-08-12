@@ -8,9 +8,22 @@ import (
 	"todoApp/api/service"
 )
 
+// CreateListHandler godoc
+//
+//	@Summary		Create todo list
+//	@Description	Creates new todo list
+//	@Tags			Todo lists & tasks
+//	@Accept			json
+//	@Produce		json
+//	@Param			model	body		createTodoList	true	"Create new todo list"
+//	@Success		200		{object}	service.DefaultResponse
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
+//	@Router			/todo-lists [post]
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	todoList := TodoList{}
+	todoList := createTodoList{}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -50,14 +63,25 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	log.WithFields(log.Fields{
-		"id":    todoList.Uuid,
+		"id":    todoList.ListUuid,
 		"title": todoList.Title,
 	}).Info(service.TodoListCreateSuccess)
 }
 
+// GetAllListsHandler godoc
+//
+//	@Summary		Get todo lists
+//	@Description	Requests all todo list
+//	@Tags			Todo lists & tasks
+//	@Produce		json
+//	@Success		200	{array}		readTodoList
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
+//	@Router			/todo-lists [get]
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	todoLists := TodoList{}
+	todoLists := readTodoList{}
 
 	lists, err := todoLists.GetAllLists()
 	if err != nil {
@@ -70,6 +94,19 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info(service.TodoListReadSuccess)
 }
 
+// UpdateListHandler godoc
+//
+//	@Summary		Update todo list
+//	@Description	Updates todo list
+//	@Tags			Todo lists & tasks
+//	@Produce		json
+//	@Param			listId		path		string			true	"list uuid"
+//	@Param			"List data"	body		createTodoList	true	"List data for update"
+//	@Success		200			{object}	TodoList
+//	@Failure		400			{object}	service.errorResponse	"Bad request"
+//	@Failure		401			{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500			{object}	service.errorResponse	"Internal server error"
+//	@Router			/todo-lists/{listId} [put]
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -80,7 +117,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	todoList := TodoList{Uuid: id}
+	todoList := createTodoList{ListUuid: id}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -111,10 +148,22 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	log.WithFields(log.Fields{
-		"id": todoList.Uuid,
+		"id": todoList.ListUuid,
 	}).Info(service.TodoListUpdateSuccess)
 }
 
+// DeleteListHandler godoc
+//
+//	@Summary		Delete todo list
+//	@Description	Deletes todo list
+//	@Tags			Todo lists & tasks
+//	@Produce		json
+//	@Param			listId	path		string	true	"list uuid"
+//	@Success		200		{object}	service.DefaultResponse
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
+//	@Router			/todo-lists/{listId} [delete]
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id, err := uuid.Parse(r.PathValue("listId"))
@@ -123,7 +172,7 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
-	todoList := TodoList{Uuid: id}
+	todoList := TodoList{ListUuid: id}
 
 	err = todoList.Delete()
 	if err != nil {
@@ -140,6 +189,6 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	log.WithFields(log.Fields{
-		"id": todoList.Uuid,
+		"id": todoList.ListUuid,
 	}).Info(service.TodoListDeleteSuccess)
 }
