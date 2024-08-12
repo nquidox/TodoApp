@@ -34,8 +34,11 @@ func (db *DB) ReadOneRecord(model any, params map[string]any) error {
 	return nil
 }
 
-func (db *DB) ReadManyRecords(model any) error {
-	err := db.Connection.Find(model).Error
+func (db *DB) ReadManyRecords(model any, submodel any) error {
+	err := db.Connection.
+		Model(model).
+		Find(submodel).
+		Error
 	if err != nil {
 		return err
 	}
@@ -58,10 +61,30 @@ func (db *DB) ReadWithPagination(model any, params map[string]any) error {
 }
 
 func (db *DB) UpdateRecord(model any, params map[string]any) error {
-	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", params["field"]), params[params["field"].(string)]).
-		Updates(model).
-		Error
+	query := db.Connection
+
+	for k, v := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", k), v)
+	}
+	query = query.Updates(model)
+
+	err := query.Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *DB) UpdateRecordSubmodel(model any, submodel any, params map[string]any) error {
+	query := db.Connection.Model(model)
+
+	for k, v := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", k), v)
+	}
+
+	query = query.Updates(submodel)
+
+	err := query.Error
 	if err != nil {
 		return err
 	}
@@ -69,10 +92,12 @@ func (db *DB) UpdateRecord(model any, params map[string]any) error {
 }
 
 func (db *DB) DeleteRecord(model any, params map[string]any) error {
-	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", params["field"]), params[params["field"].(string)]).
-		Delete(model).
-		Error
+	query := db.Connection
+
+	for k, v := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", k), v)
+	}
+	err := query.Delete(model).Error
 	if err != nil {
 		return err
 	}
