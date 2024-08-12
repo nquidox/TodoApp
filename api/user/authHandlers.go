@@ -169,7 +169,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func getUser(email string) (User, error) {
 	var user User
-	params := map[string]any{"field": "email", "email": email}
+	params := map[string]any{"email": email}
 	err := Worker.ReadOneRecord(&user, params)
 	if err != nil {
 		return user, err

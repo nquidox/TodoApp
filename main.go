@@ -7,6 +7,7 @@ import (
 	"todoApp/api/user"
 	"todoApp/config"
 	"todoApp/db"
+	"todoApp/types"
 )
 
 // @title						TODO App API
@@ -42,7 +43,7 @@ func main() {
 
 	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
 
-	var worker db.DatabaseWorker = &db.DB{Connection: db.ConnectToDB(c)}
+	var worker types.DatabaseWorker = &db.DB{Connection: db.Connect(c)}
 	user.Worker = worker
 	user.Init()
 

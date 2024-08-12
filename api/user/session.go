@@ -32,7 +32,7 @@ func getTokenValue(r *http.Request) (string, error) {
 
 func tokenIsValid(token string) (bool, uuid.UUID) {
 	var s Session
-	params := map[string]any{"field": "token", "token": token}
+	params := map[string]any{"token": token}
 	err := Worker.ReadOneRecord(&s, params)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,7 +76,7 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 
 func dropSession(cookieToken string) error {
 	var session Session
-	params := map[string]any{"field": "token", "token": cookieToken}
+	params := map[string]any{"token": cookieToken}
 	err := Worker.ReadOneRecord(&session, params)
 	if err != nil {
 		return err
