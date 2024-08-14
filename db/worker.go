@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 func (db *DB) InitTable(model any) error {
@@ -46,17 +47,36 @@ func (db *DB) ReadManyRecords(model any, submodel any) error {
 }
 
 func (db *DB) ReadWithPagination(model any, params map[string]any) error {
-	err := db.Connection.
-		Where(fmt.Sprintf("%s = ?", params["field"])).
-		Offset((params["page"]).(int) - 1*params["count"].(int)).
-		Limit(params["count"].(int)).
-		Find(model).
-		Error
+	query := db.Connection
+	debugLogHeader := "Read with pagination"
 
+	for key, value := range params {
+		switch key {
+		case "page":
+			{
+				query = query.Offset((params["page"]).(int) - 1*params["count"].(int))
+				log.WithFields(log.Fields{
+					"page": params["page"],
+				}).Debug(debugLogHeader)
+			}
+		case "count":
+			{
+				query = query.Limit(params["count"].(int))
+				log.WithFields(log.Fields{
+					"count": params["count"],
+				}).Debug(debugLogHeader)
+			}
+		default:
+			query = query.Where(fmt.Sprintf("%s = ?", key), value)
+			log.WithFields(log.Fields{
+				key: value,
+			}).Debug(debugLogHeader)
+		}
+	}
+	err := query.Find(model).Error
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
