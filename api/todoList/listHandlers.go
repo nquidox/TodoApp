@@ -12,7 +12,7 @@ import (
 //
 //	@Summary		Create todo list
 //	@Description	Creates new todo list
-//	@Tags			Todo lists & tasks
+//	@Tags			Todo lists
 //	@Accept			json
 //	@Produce		json
 //	@Param			model	body		createTodoList	true	"Create new todo list"
@@ -72,7 +72,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Get todo lists
 //	@Description	Requests all todo list
-//	@Tags			Todo lists & tasks
+//	@Tags			Todo lists
 //	@Produce		json
 //	@Success		200	{array}		readTodoList
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
@@ -98,14 +98,14 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Update todo list
 //	@Description	Updates todo list
-//	@Tags			Todo lists & tasks
+//	@Tags			Todo lists
 //	@Produce		json
-//	@Param			listId		path		string			true	"list uuid"
-//	@Param			"List data"	body		createTodoList	true	"List data for update"
-//	@Success		200			{object}	TodoList
-//	@Failure		400			{object}	service.errorResponse	"Bad request"
-//	@Failure		401			{object}	service.errorResponse	"Unauthorized"
-//	@Failure		500			{object}	service.errorResponse	"Internal server error"
+//	@Param			listId	path		string			true	"List uuid"
+//	@Param			data	body		createTodoList	true	"List data for update"
+//	@Success		200		{object}	TodoList
+//	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [put]
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -156,7 +156,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Delete todo list
 //	@Description	Deletes todo list
-//	@Tags			Todo lists & tasks
+//	@Tags			Todo lists
 //	@Produce		json
 //	@Param			listId	path		string	true	"list uuid"
 //	@Success		200		{object}	service.DefaultResponse

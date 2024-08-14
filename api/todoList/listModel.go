@@ -17,7 +17,7 @@ type TodoList struct {
 type createTodoList struct {
 	ListUuid uuid.UUID `json:"-"`
 	Title    string    `json:"title" binding:"required"  extensions:"x-order=1"`
-	Order    int       `json:"order"  extensions:"x-order=2"`
+	Order    int       `json:"order" extensions:"x-order=2"`
 }
 
 type readTodoList struct {
