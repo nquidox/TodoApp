@@ -44,7 +44,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = usr.Create()
+	err = usr.Create(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserCreateErr, err)
 		log.Error(service.UserCreateErr, err)
@@ -79,7 +79,7 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	target := targetUUID(w, r)
 
 	usr := User{UserUUID: target}
-	err := usr.Read()
+	err := usr.Read(Worker)
 	if err != nil {
 		log.Error(service.UserReadErr, err)
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
@@ -130,7 +130,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = usr.Update()
+	err = usr.Update(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
 		log.Error(service.UserUpdateErr, err)
@@ -171,7 +171,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	target := targetUUID(w, r)
 	usr := User{UserUUID: target}
 
-	err := usr.Delete()
+	err := usr.Delete(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserDeleteErr, err)
 		return
@@ -215,7 +215,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	}
 
 	usr := User{UserUUID: userUUID}
-	err = usr.Read()
+	err = usr.Read(Worker)
 	if err != nil {
 		log.Error(service.UserReadErr, err.Error())
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)

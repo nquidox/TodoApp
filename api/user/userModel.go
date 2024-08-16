@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"todoApp/types"
 )
 
 type User struct {
@@ -43,7 +44,7 @@ type loginUserModel struct {
 	Password string `json:"password" extensions:"x-order=2"`
 }
 
-func (u *User) Create() error {
+func (u *User) Create(wrk types.DatabaseWorker) error {
 	var err error
 	u.UserUUID = uuid.New()
 	u.IsSuperuser = false
@@ -53,44 +54,44 @@ func (u *User) Create() error {
 		return err
 	}
 
-	err = Worker.CreateRecord(u)
+	err = wrk.CreateRecord(u)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) Read() error {
+func (u *User) Read(wrk types.DatabaseWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
-	err := Worker.ReadOneRecord(u, params)
+	err := wrk.ReadOneRecord(u, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *updateUser) Update() error {
+func (u *updateUser) Update(wrk types.DatabaseWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
-	err := Worker.UpdateRecord(u, params)
+	err := wrk.UpdateRecord(u, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) Delete() error {
+func (u *User) Delete(wrk types.DatabaseWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
-	err := Worker.DeleteRecord(u, params)
+	err := wrk.DeleteRecord(u, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *meModel) Read() error {
+func (m *meModel) Read(wrk types.DatabaseWorker) error {
 	var usr User
 	params := map[string]any{"user_uuid": m.UserUUID}
-	err := Worker.ReadOneRecord(&usr, params)
+	err := wrk.ReadOneRecord(&usr, params)
 
 	m.Email = usr.Email
 	m.Username = usr.Username
