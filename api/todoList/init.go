@@ -8,15 +8,16 @@ import (
 
 var Worker types.DatabaseWorker
 
-func Init() {
+func Init(wrk types.DatabaseWorker) {
 	var err error
+	Worker = wrk
 
-	err = Worker.InitTable(&TodoList{})
+	err = wrk.InitTable(&TodoList{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = Worker.InitTable(&Task{})
+	err = wrk.InitTable(&Task{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}

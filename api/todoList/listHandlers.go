@@ -46,7 +46,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = todoList.Create()
+	err = todoList.Create(Worker)
 	if err != nil {
 		log.Error(service.ListCreateErr, err)
 		service.InternalServerErrorResponse(w, service.ListCreateErr, err)
@@ -83,7 +83,7 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	todoLists := readTodoList{}
 
-	lists, err := todoLists.GetAllLists()
+	lists, err := todoLists.GetAllLists(Worker)
 	if err != nil {
 		log.Error(service.ListReadErr, err)
 		service.InternalServerErrorResponse(w, service.ListReadErr, err)
@@ -133,7 +133,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = todoList.Update()
+	err = todoList.Update(Worker)
 	if err != nil {
 		log.Error(service.ListUpdateErr, err)
 		service.InternalServerErrorResponse(w, service.ListUpdateErr, err)
@@ -174,7 +174,7 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	todoList := TodoList{ListUuid: id}
 
-	err = todoList.Delete()
+	err = todoList.Delete(Worker)
 	if err != nil {
 		log.Error(service.ListDeleteErr, err)
 		service.InternalServerErrorResponse(w, service.ListDeleteErr, err)

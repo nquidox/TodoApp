@@ -68,7 +68,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Order:       task.Order,
 	}
 
-	err = newTask.Create()
+	err = newTask.Create(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
 		log.Error(service.TaskCreateErr, err)
@@ -117,7 +117,7 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		"Page":   page,
 	}).Debug("Query and path params")
 
-	read, err := tasks.Read(count, page)
+	read, err := tasks.Read(Worker, count, page)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskReadErr, err)
 		log.Error(service.TaskReadErr, err)
@@ -183,7 +183,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = task.Update()
+	err = task.Update(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
 		log.Error(service.TaskUpdateErr, err)
@@ -228,7 +228,7 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t := Task{TodoListId: listId, TaskId: taskId}
-	err = t.Delete()
+	err = t.Delete(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
 		log.Error(service.TaskDeleteErr, err)

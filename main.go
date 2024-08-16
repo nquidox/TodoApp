@@ -52,10 +52,9 @@ func main() {
 	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
 
 	var worker types.DatabaseWorker = &db.DB{Connection: db.Connect(c)}
-	user.Init(worker)
 
-	todoList.Worker = worker
-	todoList.Init()
+	user.Init(worker)
+	todoList.Init(worker)
 
 	server := NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort)
 

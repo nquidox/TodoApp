@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
+	"todoApp/types"
 )
 
 type TodoList struct {
@@ -32,7 +33,7 @@ type Item struct {
 	List createTodoList `json:"item"`
 }
 
-func (c *createTodoList) Create() error {
+func (c *createTodoList) Create(wrk types.DatabaseWorker) error {
 	list := TodoList{
 		ListUuid:  uuid.New(),
 		Title:     c.Title,
@@ -40,7 +41,7 @@ func (c *createTodoList) Create() error {
 		OwnerUuid: uuid.Nil, //change to uuid from auth token
 	}
 
-	err := Worker.CreateRecord(&list)
+	err := wrk.CreateRecord(&list)
 	if err != nil {
 		return err
 	}
@@ -48,27 +49,27 @@ func (c *createTodoList) Create() error {
 	return nil
 }
 
-func (r *readTodoList) GetAllLists() ([]readTodoList, error) {
+func (r *readTodoList) GetAllLists(wrk types.DatabaseWorker) ([]readTodoList, error) {
 	var allLists []readTodoList
-	err := Worker.ReadManyRecords(TodoList{}, &allLists)
+	err := wrk.ReadManyRecords(TodoList{}, &allLists)
 	if err != nil {
 		return nil, err
 	}
 	return allLists, nil
 }
 
-func (c *createTodoList) Update() error {
+func (c *createTodoList) Update(wrk types.DatabaseWorker) error {
 	params := map[string]any{"list_uuid": c.ListUuid}
-	err := Worker.UpdateRecordSubmodel(TodoList{}, c, params)
+	err := wrk.UpdateRecordSubmodel(TodoList{}, c, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *TodoList) Delete() error {
+func (t *TodoList) Delete(wrk types.DatabaseWorker) error {
 	params := map[string]any{"list_uuid": t.ListUuid}
-	err := Worker.DeleteRecord(t, params)
+	err := wrk.DeleteRecord(t, params)
 	if err != nil {
 		return err
 	}
