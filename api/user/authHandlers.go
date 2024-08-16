@@ -30,7 +30,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, meUUID := tokenIsValid(token.Value)
+	t, meUUID := tokenIsValid(Worker, token.Value)
 	if !t {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.TokenValidationErr, err)
@@ -38,7 +38,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	me := meModel{UserUUID: meUUID}
-	err = me.Read()
+	err = me.Read(Worker)
 	if err != nil {
 		service.BadRequestResponse(w, service.UserReadErr, err)
 		log.Error(service.UserReadErr, err)
@@ -114,7 +114,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := createSession(getUsr.UserUUID)
+	cookie, err := createSession(Worker, getUsr.UserUUID)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 		log.Error(service.SessionCreateErr, err)
@@ -158,13 +158,13 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t, _ := tokenIsValid(cookie.Value); !t {
+	if t, _ := tokenIsValid(Worker, cookie.Value); !t {
 		service.UnauthorizedResponse(w, service.InvalidTokenErr)
 		log.Error(service.InvalidTokenErr)
 		return
 	}
 
-	err = dropSession(cookie.Value)
+	err = dropSession(Worker, cookie.Value)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCloseErr, err)
 		log.Error(service.SessionCloseErr, err)

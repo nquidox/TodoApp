@@ -197,7 +197,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 		return uuid.Nil
 	}
 
-	t, userUUID := tokenIsValid(token)
+	t, userUUID := tokenIsValid(Worker, token)
 	if !t {
 		log.Error(service.TokenValidationErr, err)
 		service.UnauthorizedResponse(w, "")

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"todoApp/types"
 
 	"net/http"
 	"time"
@@ -30,10 +31,10 @@ func getTokenValue(r *http.Request) (string, error) {
 	return token.Value, nil
 }
 
-func tokenIsValid(token string) (bool, uuid.UUID) {
+func tokenIsValid(wrk types.DatabaseWorker, token string) (bool, uuid.UUID) {
 	var s Session
 	params := map[string]any{"token": token}
-	err := Worker.ReadOneRecord(&s, params)
+	err := wrk.ReadOneRecord(&s, params)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, uuid.Nil
@@ -46,7 +47,7 @@ func tokenIsValid(token string) (bool, uuid.UUID) {
 	return true, s.UserUuid
 }
 
-func createSession(u uuid.UUID) (http.Cookie, error) {
+func createSession(wrk types.DatabaseWorker, u uuid.UUID) (http.Cookie, error) {
 	token, err := generateToken(32)
 	if err != nil {
 		return http.Cookie{}, err
@@ -61,7 +62,7 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 		Expires:    expires,
 	}
 
-	err = Worker.CreateRecord(&session)
+	err = wrk.CreateRecord(&session)
 	if err != nil {
 		return http.Cookie{}, err
 	}
@@ -74,7 +75,7 @@ func createSession(u uuid.UUID) (http.Cookie, error) {
 	return cookie, nil
 }
 
-func dropSession(cookieToken string) error {
+func dropSession(wrk types.DatabaseWorker, cookieToken string) error {
 	var session Session
 	params := map[string]any{"token": cookieToken}
 	err := Worker.ReadOneRecord(&session, params)
@@ -82,7 +83,7 @@ func dropSession(cookieToken string) error {
 		return err
 	}
 
-	err = Worker.DeleteRecord(&session, params)
+	err = wrk.DeleteRecord(&session, params)
 	if err != nil {
 		return err
 	}
