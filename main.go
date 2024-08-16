@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	"path"
+	"runtime"
 	"todoApp/api/todoList"
 	"todoApp/api/user"
 	"todoApp/config"
@@ -36,16 +39,20 @@ func main() {
 	c := config.New()
 
 	log.SetLevel(appSetLogLevel(c.Config.AppLogLevel))
+
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "02-01-2006 15:04:05",
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			filename := path.Base(f.File)
+			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf(" %s:%d", filename, f.Line)
+		},
 	})
 
 	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
 
 	var worker types.DatabaseWorker = &db.DB{Connection: db.Connect(c)}
-	user.Worker = worker
-	user.Init()
+	user.Init(worker)
 
 	todoList.Worker = worker
 	todoList.Init()
