@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 )
@@ -14,9 +15,10 @@ func (db *DB) InitTable(model any) error {
 }
 
 func (db *DB) CreateRecord(model any) error {
-	err := db.Connection.Create(model).Error
-	if err != nil {
-		return err
+	result := db.Connection.Create(model)
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
@@ -28,20 +30,29 @@ func (db *DB) ReadOneRecord(model any, params map[string]any) error {
 		query = query.Where(fmt.Sprintf("%s = ?", key), value)
 	}
 
-	err := query.First(model).Error
-	if err != nil {
-		return err
+	result := query.First(model)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
 
 func (db *DB) ReadManyRecords(model any, submodel any) error {
-	err := db.Connection.
+	result := db.Connection.
 		Model(model).
-		Find(submodel).
-		Error
-	if err != nil {
-		return err
+		Find(submodel)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
@@ -73,9 +84,14 @@ func (db *DB) ReadWithPagination(model any, params map[string]any) error {
 			}).Debug(debugLogHeader)
 		}
 	}
-	err := query.Find(model).Error
-	if err != nil {
-		return err
+	result := query.Find(model)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
@@ -86,11 +102,14 @@ func (db *DB) UpdateRecord(model any, params map[string]any) error {
 	for k, v := range params {
 		query = query.Where(fmt.Sprintf("%s = ?", k), v)
 	}
-	query = query.Updates(model)
+	result := query.Updates(model)
 
-	err := query.Error
-	if err != nil {
-		return err
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
@@ -102,11 +121,14 @@ func (db *DB) UpdateRecordSubmodel(model any, submodel any, params map[string]an
 		query = query.Where(fmt.Sprintf("%s = ?", k), v)
 	}
 
-	query = query.Updates(submodel)
+	result := query.Updates(submodel)
 
-	err := query.Error
-	if err != nil {
-		return err
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }
@@ -117,9 +139,15 @@ func (db *DB) DeleteRecord(model any, params map[string]any) error {
 	for k, v := range params {
 		query = query.Where(fmt.Sprintf("%s = ?", k), v)
 	}
-	err := query.Delete(model).Error
-	if err != nil {
-		return err
+
+	result := query.Delete(model)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }

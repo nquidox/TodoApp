@@ -88,7 +88,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	usr := loginUserModel{}
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 		log.Error(service.JSONDeserializingErr, err)
 		return
 	}

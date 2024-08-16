@@ -43,7 +43,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
-		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 		log.Error(service.JSONDeserializingErr, err)
 		return
 	}
@@ -171,7 +171,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
-		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 		log.Error(service.JSONDeserializingErr, err)
 		return
 	}

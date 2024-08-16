@@ -32,7 +32,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 		log.Error(service.JSONDeserializingErr, err)
 		return
 	}
@@ -125,7 +125,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = service.DeserializeJSON(data, &usr)
 	if err != nil {
-		service.UnprocessableEntity(w, service.JSONDeserializingErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 		log.Error(service.JSONDeserializingErr, err)
 		return
 	}

@@ -35,7 +35,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
 		log.Error(service.JSONDeserializingErr, err)
-		service.UnprocessableEntity(w, service.JSONReadErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONReadErr, err)
 		return
 	}
 
@@ -85,6 +85,11 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 
 	lists, err := todoLists.GetAllLists(Worker)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		log.Error(service.ListReadErr, err)
 		service.InternalServerErrorResponse(w, service.ListReadErr, err)
 		return
@@ -129,12 +134,17 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
 		log.Error(service.JSONDeserializingErr, err)
-		service.UnprocessableEntity(w, service.JSONReadErr, err)
+		service.UnprocessableEntityResponse(w, service.JSONReadErr, err)
 		return
 	}
 
 	err = todoList.Update(Worker)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		log.Error(service.ListUpdateErr, err)
 		service.InternalServerErrorResponse(w, service.ListUpdateErr, err)
 		return
@@ -175,7 +185,13 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	todoList := TodoList{ListUuid: id}
 
 	err = todoList.Delete(Worker)
+
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		log.Error(service.ListDeleteErr, err)
 		service.InternalServerErrorResponse(w, service.ListDeleteErr, err)
 		return

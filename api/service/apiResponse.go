@@ -56,7 +56,16 @@ func UnauthorizedResponse(w http.ResponseWriter, msg any) {
 	})
 }
 
-func UnprocessableEntity(w http.ResponseWriter, errType string, errMsg error) {
+func NotFoundResponse(w http.ResponseWriter, msg any) {
+	serverResponse(w, errorResponse{
+		ResultCode: 1,
+		HttpCode:   http.StatusNotFound,
+		Messages:   "Not Found",
+		Data:       msg,
+	})
+}
+
+func UnprocessableEntityResponse(w http.ResponseWriter, errType string, errMsg error) {
 	serverResponse(w, errorResponse{
 		ResultCode: 1,
 		HttpCode:   http.StatusUnprocessableEntity,
