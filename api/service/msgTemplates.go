@@ -17,6 +17,7 @@ const (
 	UserDeleteErr = "User delete error"
 	EmailErr      = "Email is incorrect"
 	PasswordErr   = "Password is incorrect"
+	ConflictErr   = "Already exists"
 
 	/* Session Errors */
 

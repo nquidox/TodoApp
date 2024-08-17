@@ -65,6 +65,15 @@ func NotFoundResponse(w http.ResponseWriter, msg any) {
 	})
 }
 
+func ConflictResponse(w http.ResponseWriter, msg any) {
+	serverResponse(w, errorResponse{
+		ResultCode: 1,
+		HttpCode:   http.StatusConflict,
+		Messages:   "Conflict",
+		Data:       msg,
+	})
+}
+
 func UnprocessableEntityResponse(w http.ResponseWriter, errType string, errMsg error) {
 	serverResponse(w, errorResponse{
 		ResultCode: 1,
