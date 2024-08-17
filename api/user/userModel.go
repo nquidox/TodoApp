@@ -62,7 +62,7 @@ func (u *User) Create(wrk types.DatabaseWorker) error {
 }
 
 func (u *User) Read(wrk types.DatabaseWorker) error {
-	params := map[string]any{"user_uuid": u.UserUUID}
+	params := map[string]any{"user_uuid": u.UserUUID, "email": u.Email}
 	err := wrk.ReadOneRecord(u, params)
 	if err != nil {
 		return err

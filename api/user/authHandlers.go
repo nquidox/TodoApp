@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"todoApp/api/service"
+	"todoApp/types"
 )
 
 // MeHandler     godoc
@@ -100,7 +101,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	getUsr, err := getUser(usr.Email)
+	getUsr, err := getUser(Worker, usr.Email)
 	if err != nil {
 		service.BadRequestResponse(w, service.EmailErr, err)
 		log.Error(service.EmailErr, err)
@@ -176,10 +177,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}).Info(service.LogoutSuccess)
 }
 
-func getUser(email string) (User, error) {
+func getUser(wrk types.DatabaseWorker, email string) (User, error) {
 	var user User
 	params := map[string]any{"email": email}
-	err := Worker.ReadOneRecord(&user, params)
+	err := wrk.ReadOneRecord(&user, params)
 	if err != nil {
 		return user, err
 	}

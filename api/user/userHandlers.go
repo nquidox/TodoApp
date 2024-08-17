@@ -44,6 +44,13 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = usr.Read(Worker)
+	if err != nil {
+		service.ConflictResponse(w, service.ConflictErr)
+		log.Error(service.ConflictErr, err)
+		return
+	}
+
 	err = usr.Create(Worker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserCreateErr, err)
