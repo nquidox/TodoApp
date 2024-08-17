@@ -7,21 +7,15 @@ import (
 )
 
 func (c *createTodoList) validateTitle() error {
-	if len(c.Title) < 1 {
-		return errors.New("list has no title")
-	}
-	if len(c.Title) > 100 {
-		return errors.New("title is too long (MAX=100)")
-	}
-	return nil
+	return validateTitle(c.Title, "list")
 }
 
 func (c *createTask) validateTitle() error {
-	return validateTitle(c.Title)
+	return validateTitle(c.Title, "task")
 }
 
 func (t *Task) validateTitle() error {
-	return validateTitle(t.Title)
+	return validateTitle(t.Title, "task")
 }
 
 func validateTime(timeString string) time.Time {
@@ -43,9 +37,9 @@ func validateQueryInt(queryValue string, defaultValue int) int {
 	return i
 }
 
-func validateTitle(title string) error {
+func validateTitle(title, fieldName string) error {
 	if len(title) < 1 {
-		return errors.New("task has no title")
+		return errors.New(fieldName + " has no title")
 	}
 	if len(title) > 100 {
 		return errors.New("title is too long (MAX=100)")
