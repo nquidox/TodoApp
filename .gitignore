@@ -1,5 +1,4 @@
 /.idea
+/!info
+/docs
 .env
-form.html
-docs
-notes.txt
