@@ -61,10 +61,14 @@ func (db *DB) ReadRecordSubmodel(model any, submodel any, params map[string]any)
 	return nil
 }
 
-func (db *DB) ReadManyRecords(model any, submodel any) error {
-	result := db.Connection.
-		Model(model).
-		Find(submodel)
+func (db *DB) ReadManyRecords(model any, submodel any, params map[string]any) error {
+	query := db.Connection.Model(model)
+
+	for key, value := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+	}
+
+	result := query.Find(submodel)
 
 	if result.RowsAffected == 0 {
 		return errors.New("404")
