@@ -13,10 +13,11 @@ import (
 //	@Summary		Create todo list
 //	@Description	Creates new todo list
 //	@Tags			Todo lists
+//	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			model	body		createTodoList	true	"Create new todo list"
-//	@Success		200		{object}	service.DefaultResponse
+//	@Param			model	body		createTodoList			true	"Create new todo list"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
@@ -46,6 +47,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	todoList.ListUuid = uuid.New()
 	err = todoList.Create(Worker)
 	if err != nil {
 		log.Error(service.ListCreateErr, err)
@@ -73,10 +75,13 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get todo lists
 //	@Description	Requests all todo list
 //	@Tags			Todo lists
+//	@Security		BasicAuth
 //	@Produce		json
-//	@Success		200	{array}		readTodoList
+//	@Success		200	{array}		readTodoList			"OK"
+//	@Success		204	{array}		readTodoList			"No Content"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404	{object}	service.errorResponse	"Not Found"
 //	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists [get]
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +91,13 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	lists, err := todoLists.GetAllLists(Worker)
 	if err != nil {
 		if err.Error() == "404" {
-			service.NotFoundResponse(w, "")
+			//if no records found, return success 204 no content instead of 404
+			service.OkResponse(w, service.DefaultResponse{
+				ResultCode: 0,
+				HttpCode:   http.StatusNoContent,
+				Messages:   "",
+				Data:       nil,
+			})
 			log.Error(service.DBNotFound)
 			return
 		}
@@ -104,12 +115,14 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Update todo list
 //	@Description	Updates todo list
 //	@Tags			Todo lists
+//	@Security		BasicAuth
 //	@Produce		json
-//	@Param			listId	path		string			true	"List uuid"
-//	@Param			data	body		createTodoList	true	"List data for update"
-//	@Success		200		{object}	TodoList
+//	@Param			listId	path		string					true	"List uuid"
+//	@Param			data	body		createTodoList			true	"List data for update"
+//	@Success		200		{object}	TodoList				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [put]
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
@@ -167,11 +180,13 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Delete todo list
 //	@Description	Deletes todo list
 //	@Tags			Todo lists
+//	@Security		BasicAuth
 //	@Produce		json
-//	@Param			listId	path		string	true	"list uuid"
-//	@Success		200		{object}	service.DefaultResponse
+//	@Param			listId	path		string					true	"list uuid"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [delete]
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {

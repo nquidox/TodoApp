@@ -16,9 +16,10 @@ type TodoList struct {
 }
 
 type createTodoList struct {
-	ListUuid uuid.UUID `json:"-"`
-	Title    string    `json:"title" binding:"required"  extensions:"x-order=1"`
-	Order    int       `json:"order" extensions:"x-order=2"`
+	ListUuid  uuid.UUID `json:"-"`
+	OwnerUuid uuid.UUID `json:"-"`
+	Title     string    `json:"title" binding:"required"  extensions:"x-order=1"`
+	Order     int       `json:"order" extensions:"x-order=2"`
 }
 
 type readTodoList struct {
@@ -35,10 +36,10 @@ type Item struct {
 
 func (c *createTodoList) Create(wrk types.DatabaseWorker) error {
 	list := TodoList{
-		ListUuid:  uuid.New(),
+		ListUuid:  c.ListUuid,
 		Title:     c.Title,
 		Order:     c.Order,
-		OwnerUuid: uuid.Nil, //change to uuid from auth token
+		OwnerUuid: c.OwnerUuid,
 	}
 
 	err := wrk.CreateRecord(&list)

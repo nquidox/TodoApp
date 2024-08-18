@@ -18,6 +18,7 @@ import (
 //	@Param			user	body		User	true	"Create new user"
 //	@Success		200		{object}	User
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		409		{object}	service.errorResponse	"Conflict"
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user [post]
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,10 +75,12 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Tags			User
 //	@Security		BasicAuth
 //	@Produce		json
-//	@Param			id	path		string	false	"uuid"
-//	@Success		200	{object}	User
+//	@Param			id	path		string					false	"uuid"
+//	@Success		200	{object}	User					"OK"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404	{object}	service.errorResponse	"Not Found"
+//	@Failure		409	{object}	service.errorResponse	"Conflict"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [get]
 func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,6 +91,11 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	usr := User{UserUUID: target}
 	err := usr.Read(Worker)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		log.Error(service.UserReadErr, err)
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return
@@ -109,11 +117,13 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string		false	"uuid"
-//	@Param			user	body		updateUser	true	"Update user"
-//	@Success		200		{object}	service.errorResponse
+//	@Param			id		path		string					false	"uuid"
+//	@Param			user	body		updateUser				true	"Update user"
+//	@Success		200		{object}	service.errorResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404		{object}	service.errorResponse	"Not Found"
+//	@Failure		409		{object}	service.errorResponse	"Conflict"
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [put]
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,6 +149,11 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = usr.Update(Worker)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
 		log.Error(service.UserUpdateErr, err)
 		return
@@ -166,10 +181,12 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path	string	false	"uuid"
-//	@Success		204
+//	@Param			id	path		string					false	"uuid"
+//	@Success		204	{object}	service.DefaultResponse	"No Content"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404	{object}	service.errorResponse	"Not Found"
+//	@Failure		409	{object}	service.errorResponse	"Conflict"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [delete]
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -180,13 +197,18 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := usr.Delete(Worker)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		service.InternalServerErrorResponse(w, service.UserDeleteErr, err)
 		return
 	}
 
 	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		HttpCode:   http.StatusOK,
+		HttpCode:   http.StatusNoContent,
 		Messages:   service.UserDeleteSuccess,
 		Data:       nil,
 	})

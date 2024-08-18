@@ -15,9 +15,9 @@ import (
 //	@Tags			Tasks
 //	@Accept			json
 //	@Produce		json
-//	@Param			listId	path		string		true	"List UUID"
-//	@Param			model	body		createTask	true	"Create new task"
-//	@Success		200		{object}	createTask
+//	@Param			listId	path		string					true	"List UUID"
+//	@Param			model	body		createTask				true	"Create new task"
+//	@Success		200		{object}	createTask				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
@@ -88,10 +88,11 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Description	Requests all tasks with query parameters. Count and page params are optional. Defaults: count=10, page=1
 //	@Tags			Tasks
 //	@Produce		json
-//	@Param			listId	path		string	true	"list uuid"
-//	@Param			count	query		string	false	"Count (number of task to show per page)"
-//	@Param			page	query		string	false	"Page number"
-//	@Success		200		{array}		Task
+//	@Param			listId	path		string					true	"list uuid"
+//	@Param			count	query		string					false	"Count (number of task to show per page)"
+//	@Param			page	query		string					false	"Page number"
+//	@Success		200		{array}		Task					"OK"
+//	@Success		204		{object}	service.DefaultResponse	"No Content"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
@@ -119,6 +120,13 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	read, err := tasks.Read(Worker, count, page)
 	if err != nil {
+		//if no records found, return success 204 no content instead of 404
+		service.OkResponse(w, service.DefaultResponse{
+			ResultCode: 0,
+			HttpCode:   http.StatusNoContent,
+			Messages:   "",
+			Data:       nil,
+		})
 		service.InternalServerErrorResponse(w, service.TaskReadErr, err)
 		log.Error(service.TaskReadErr, err)
 		return
@@ -135,12 +143,13 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Description	Updates task
 //	@Tags			Tasks
 //	@Produce		json
-//	@Param			listId	path		string		true	"list uuid"
-//	@Param			taskId	path		string		true	"task uuid"
-//	@Param			data	body		createTask	true	"Task data for update"
-//	@Success		200		{object}	createTask
+//	@Param			listId	path		string					true	"list uuid"
+//	@Param			taskId	path		string					true	"task uuid"
+//	@Param			data	body		createTask				true	"Task data for update"
+//	@Success		200		{object}	createTask				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [put]
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -203,11 +212,12 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Description	Deletes task
 //	@Tags			Tasks
 //	@Produce		json
-//	@Param			listId	path		string	true	"list uuid"
-//	@Param			taskId	path		string	true	"task uuid"
-//	@Success		200		{object}	service.DefaultResponse
+//	@Param			listId	path		string					true	"list uuid"
+//	@Param			taskId	path		string					true	"task uuid"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [delete]
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
