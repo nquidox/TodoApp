@@ -3,7 +3,6 @@ package user
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"todoApp/types"
@@ -23,31 +22,7 @@ type Session struct {
 	Expires    time.Time
 }
 
-func getTokenValue(r *http.Request) (string, error) {
-	token, err := r.Cookie("token")
-	if err != nil {
-		return "", err
-	}
-	return token.Value, nil
-}
-
-func tokenIsValid(wrk types.DatabaseWorker, token string) (bool, uuid.UUID) {
-	var s Session
-	params := map[string]any{"token": token}
-	err := wrk.ReadOneRecord(&s, params)
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false, uuid.Nil
-	}
-
-	if err != nil {
-		return false, uuid.Nil
-	}
-
-	return true, s.UserUuid
-}
-
-func createSession(wrk types.DatabaseWorker, u uuid.UUID) (http.Cookie, error) {
+func (s *Session) Create(wrk types.DatabaseWorker, userUuid uuid.UUID) (http.Cookie, error) {
 	token, err := generateToken(32)
 	if err != nil {
 		return http.Cookie{}, err
@@ -55,14 +30,12 @@ func createSession(wrk types.DatabaseWorker, u uuid.UUID) (http.Cookie, error) {
 
 	expires := time.Now().Add(3 * time.Hour * 24 * 365)
 
-	session := Session{
-		UserUuid:   u,
-		Token:      token,
-		ClientInfo: "",
-		Expires:    expires,
-	}
+	s.UserUuid = userUuid
+	s.Token = token
+	s.ClientInfo = ""
+	s.Expires = expires
 
-	err = wrk.CreateRecord(&session)
+	err = wrk.CreateRecord(s)
 	if err != nil {
 		return http.Cookie{}, err
 	}
@@ -75,15 +48,23 @@ func createSession(wrk types.DatabaseWorker, u uuid.UUID) (http.Cookie, error) {
 	return cookie, nil
 }
 
-func dropSession(wrk types.DatabaseWorker, cookieToken string) error {
-	var session Session
-	params := map[string]any{"token": cookieToken}
-	err := Worker.ReadOneRecord(&session, params)
+func (s *Session) Read(wrk types.DatabaseWorker) error {
+	params := map[string]any{"token": s.Token}
+	err := wrk.ReadOneRecord(&s, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Session) Delete(wrk types.DatabaseWorker) error {
+	params := map[string]any{"token": s.Token}
+	err := Worker.ReadOneRecord(s, params)
 	if err != nil {
 		return err
 	}
 
-	err = wrk.DeleteRecord(&session, params)
+	err = wrk.DeleteRecord(s, params)
 	if err != nil {
 		return err
 	}

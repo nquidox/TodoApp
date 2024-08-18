@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"todoApp/api/service"
-	"todoApp/types"
 )
 
 // MeHandler     godoc
@@ -31,14 +30,15 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, meUUID := tokenIsValid(Worker, token.Value)
-	if !t {
+	s := Session{Token: token.Value}
+	err = s.Read(Worker)
+	if err != nil {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.TokenValidationErr, err)
 		return
 	}
 
-	me := meModel{UserUUID: meUUID}
+	me := meModel{UserUUID: s.UserUuid}
 	err = me.Read(Worker)
 	if err != nil {
 		service.BadRequestResponse(w, service.UserReadErr, err)
@@ -101,7 +101,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	getUsr, err := getUser(Worker, usr.Email)
+	getUsr := User{Email: usr.Email}
+	err = getUsr.Read(Worker)
 	if err != nil {
 		service.BadRequestResponse(w, service.EmailErr, err)
 		log.Error(service.EmailErr, err)
@@ -115,7 +116,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := createSession(Worker, getUsr.UserUUID)
+	var s Session
+	cookie, err := s.Create(Worker, getUsr.UserUUID)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 		log.Error(service.SessionCreateErr, err)
@@ -159,30 +161,15 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t, _ := tokenIsValid(Worker, cookie.Value); !t {
+	s := Session{Token: cookie.Value}
+	err = s.Delete(Worker)
+	if err != nil {
 		service.UnauthorizedResponse(w, service.InvalidTokenErr)
 		log.Error(service.InvalidTokenErr)
-		return
-	}
-
-	err = dropSession(Worker, cookie.Value)
-	if err != nil {
-		service.InternalServerErrorResponse(w, service.SessionCloseErr, err)
-		log.Error(service.SessionCloseErr, err)
 		return
 	}
 
 	log.WithFields(log.Fields{
 		"session": cookie.Value,
 	}).Info(service.LogoutSuccess)
-}
-
-func getUser(wrk types.DatabaseWorker, email string) (User, error) {
-	var user User
-	params := map[string]any{"email": email}
-	err := wrk.ReadOneRecord(&user, params)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
 }
