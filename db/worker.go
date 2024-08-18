@@ -42,6 +42,25 @@ func (db *DB) ReadOneRecord(model any, params map[string]any) error {
 	return nil
 }
 
+func (db *DB) ReadRecordSubmodel(model any, submodel any, params map[string]any) error {
+	query := db.Connection.Model(model)
+
+	for key, value := range params {
+		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+	}
+
+	result := query.First(submodel)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 func (db *DB) ReadManyRecords(model any, submodel any) error {
 	result := db.Connection.
 		Model(model).
