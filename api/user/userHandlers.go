@@ -46,7 +46,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = usr.Read(Worker)
-	if err != nil {
+	if err != nil && err.Error() != "404" {
 		service.ConflictResponse(w, service.ConflictErr)
 		log.Error(service.ConflictErr, err)
 		return
@@ -219,15 +219,16 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
-	token, err := getTokenValue(r)
+	token, err := r.Cookie("token")
 	if err != nil {
 		log.Error(service.TokenReadErr, err.Error())
 		service.BadRequestResponse(w, service.CookieReadErr, err)
 		return uuid.Nil
 	}
 
-	t, userUUID := tokenIsValid(Worker, token)
-	if !t {
+	s := Session{Token: token.Value}
+	err = s.Read(Worker)
+	if err != nil {
 		log.Error(service.TokenValidationErr, err)
 		service.UnauthorizedResponse(w, "")
 		return uuid.Nil
@@ -243,7 +244,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 		}
 	}
 
-	usr := User{UserUUID: userUUID}
+	usr := User{UserUUID: s.UserUuid}
 	err = usr.Read(Worker)
 	if err != nil {
 		log.Error(service.UserReadErr, err.Error())
@@ -255,5 +256,5 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 		return parsedUUID
 	}
 
-	return userUUID
+	return s.UserUuid
 }
