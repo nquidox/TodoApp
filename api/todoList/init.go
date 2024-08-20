@@ -6,18 +6,22 @@ import (
 	"todoApp/types"
 )
 
-var Worker types.DatabaseWorker
+var (
+	dbWorker   types.DatabaseWorker
+	authWorker types.AuthWorker
+)
 
-func Init(wrk types.DatabaseWorker) {
+func Init(dbWrk types.DatabaseWorker, authWkr types.AuthWorker) {
 	var err error
-	Worker = wrk
+	dbWorker = dbWrk
+	authWorker = authWkr
 
-	err = wrk.InitTable(&TodoList{})
+	err = dbWrk.InitTable(&TodoList{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = wrk.InitTable(&Task{})
+	err = dbWrk.InitTable(&Task{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}

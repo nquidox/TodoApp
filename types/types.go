@@ -7,7 +7,7 @@ type DatabaseWorker interface {
 
 	ReadOneRecord(model any, params map[string]any) error
 	ReadRecordSubmodel(model any, submodel any, params map[string]any) error
-	ReadManyRecords(model any, submodel any) error
+	ReadManyRecords(model any, submodel any, params map[string]any) error
 	ReadWithPagination(model any, params map[string]any) error
 
 	UpdateRecord(model any, params map[string]any) error

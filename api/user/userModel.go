@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"todoApp/types"
@@ -108,4 +109,19 @@ func (m *meModel) Read(wrk types.DatabaseWorker) error {
 		return err
 	}
 	return nil
+}
+
+type AuthService struct {
+	types.AuthUser
+}
+
+func (a *AuthService) IsUserLoggedIn(wrk types.DatabaseWorker, id uuid.UUID) (types.AuthUser, error) {
+	params := map[string]any{"user_uuid": id}
+
+	err := wrk.ReadRecordSubmodel(User{}, a, params)
+	if err != nil {
+		return a.AuthUser, err
+	}
+	fmt.Println("POPADANIE!!!", a.AuthUser)
+	return a.AuthUser, nil
 }

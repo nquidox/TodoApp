@@ -68,7 +68,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Order:       task.Order,
 	}
 
-	err = newTask.Create(Worker)
+	err = newTask.Create(dbWorker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
 		log.Error(service.TaskCreateErr, err)
@@ -118,15 +118,18 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		"Page":   page,
 	}).Debug("Query and path params")
 
-	read, err := tasks.Read(Worker, count, page)
+	read, err := tasks.Read(dbWorker, count, page)
 	if err != nil {
 		//if no records found, return success 204 no content instead of 404
-		service.OkResponse(w, service.DefaultResponse{
-			ResultCode: 0,
-			HttpCode:   http.StatusNoContent,
-			Messages:   "",
-			Data:       nil,
-		})
+		if err.Error() == "404" {
+			service.OkResponse(w, service.DefaultResponse{
+				ResultCode: 0,
+				HttpCode:   http.StatusNoContent,
+				Messages:   "",
+				Data:       nil,
+			})
+			return
+		}
 		service.InternalServerErrorResponse(w, service.TaskReadErr, err)
 		log.Error(service.TaskReadErr, err)
 		return
@@ -192,7 +195,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = task.Update(Worker)
+	err = task.Update(dbWorker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
 		log.Error(service.TaskUpdateErr, err)
@@ -238,7 +241,7 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t := Task{TodoListId: listId, TaskId: taskId}
-	err = t.Delete(Worker)
+	err = t.Delete(dbWorker)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
 		log.Error(service.TaskDeleteErr, err)

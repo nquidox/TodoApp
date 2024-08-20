@@ -50,9 +50,10 @@ func (c *createTodoList) Create(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (r *readTodoList) GetAllLists(wrk types.DatabaseWorker) ([]readTodoList, error) {
+func (r *readTodoList) GetAllLists(wrk types.DatabaseWorker, authUser types.AuthUser) ([]readTodoList, error) {
 	var allLists []readTodoList
-	err := wrk.ReadManyRecords(TodoList{}, &allLists)
+	params := map[string]any{"owner_uuid": authUser.UserUUID}
+	err := wrk.ReadManyRecords(TodoList{}, &allLists, params)
 	if err != nil {
 		return nil, err
 	}

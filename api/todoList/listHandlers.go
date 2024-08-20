@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"todoApp/api/service"
+	"todoApp/api/user"
 )
 
 // CreateListHandler godoc
@@ -48,7 +49,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	todoList.ListUuid = uuid.New()
-	err = todoList.Create(Worker)
+	err = todoList.Create(dbWorker)
 	if err != nil {
 		log.Error(service.ListCreateErr, err)
 		service.InternalServerErrorResponse(w, service.ListCreateErr, err)
@@ -88,10 +89,31 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	todoLists := readTodoList{}
 
-	lists, err := todoLists.GetAllLists(Worker)
+	//FIXME: refactor this in the future
+	token, err := r.Cookie("token")
+	if err != nil {
+		log.Error("Temporary code!!! Cookie error: ", err)
+	}
+	log.Debug("token recieved: ", token.Value)
+
+	s := user.Session{Token: token.Value}
+
+	err = s.Read(dbWorker)
+	if err != nil {
+		log.Error("Temporary code!!! Session read error: ", err)
+	}
+	log.Debug("session recieved: ", s)
+
+	authUsr, err := authWorker.IsUserLoggedIn(dbWorker, s.UserUuid)
+	if err != nil {
+		log.Error("Temporary code!!! authUser interface method error: ", err)
+	}
+	log.Debug("authUser recieved: ", authUsr)
+
+	//for now we ignore IsSuperuser
+	lists, err := todoLists.GetAllLists(dbWorker, authUsr)
 	if err != nil {
 		if err.Error() == "404" {
-			//if no records found, return success 204 no content instead of 404
 			service.OkResponse(w, service.DefaultResponse{
 				ResultCode: 0,
 				HttpCode:   http.StatusNoContent,
@@ -151,7 +173,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = todoList.Update(Worker)
+	err = todoList.Update(dbWorker)
 	if err != nil {
 		if err.Error() == "404" {
 			service.NotFoundResponse(w, "")
@@ -199,7 +221,7 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	todoList := TodoList{ListUuid: id}
 
-	err = todoList.Delete(Worker)
+	err = todoList.Delete(dbWorker)
 
 	if err != nil {
 		if err.Error() == "404" {
