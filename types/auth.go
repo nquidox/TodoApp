@@ -5,7 +5,7 @@ import (
 )
 
 type AuthWorker interface {
-	IsUserLoggedIn(wrk DatabaseWorker, id uuid.UUID) (AuthUser, error)
+	IsUserLoggedIn(wrk DatabaseWorker, tokenValue string) (AuthUser, error)
 }
 
 type AuthUser struct {
