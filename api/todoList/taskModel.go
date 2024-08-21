@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
-	"todoApp/types"
 )
 
 type Task struct {
@@ -34,8 +33,8 @@ type createTask struct {
 	TaskId      uuid.UUID `json:"-"`
 }
 
-func (t *Task) Create(wrk types.DatabaseWorker) error {
-	err := wrk.CreateRecord(t)
+func (t *Task) Create(dbw dbWorker) error {
+	err := dbw.CreateRecord(t)
 	if err != nil {
 		return err
 	}
@@ -43,28 +42,28 @@ func (t *Task) Create(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (t *Task) Read(wrk types.DatabaseWorker, count, page int) ([]Task, error) {
+func (t *Task) Read(dbw dbWorker, count, page int) ([]Task, error) {
 	var tasks []Task
 	params := map[string]any{"todo_list_id": t.TodoListId, "count": count, "page": page}
-	err := wrk.ReadWithPagination(&tasks, params)
+	err := dbw.ReadWithPagination(&tasks, params)
 	if err != nil {
 		return nil, err
 	}
 	return tasks, nil
 }
 
-func (c *createTask) Update(wrk types.DatabaseWorker) error {
+func (c *createTask) Update(dbw dbWorker) error {
 	params := map[string]any{"todo_list_id": c.TodoListId, "task_id": c.TaskId}
-	err := wrk.UpdateRecordSubmodel(Task{}, c, params)
+	err := dbw.UpdateRecordSubmodel(Task{}, c, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *Task) Delete(wrk types.DatabaseWorker) error {
+func (t *Task) Delete(dbw dbWorker) error {
 	params := map[string]any{"todo_list_id": t.TodoListId, "task_id": t.TaskId}
-	err := wrk.DeleteRecord(t, params)
+	err := dbw.DeleteRecord(t, params)
 	if err != nil {
 		return err
 	}

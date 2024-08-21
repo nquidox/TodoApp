@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"todoApp/types"
@@ -122,6 +121,5 @@ func (a *AuthService) IsUserLoggedIn(wrk types.DatabaseWorker, id uuid.UUID) (ty
 	if err != nil {
 		return a.AuthUser, err
 	}
-	fmt.Println("POPADANIE!!!", a.AuthUser)
 	return a.AuthUser, nil
 }

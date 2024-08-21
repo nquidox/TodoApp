@@ -49,7 +49,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	todoList.ListUuid = uuid.New()
-	err = todoList.Create(dbWorker)
+	err = todoList.Create(dbw)
 	if err != nil {
 		log.Error(service.ListCreateErr, err)
 		service.InternalServerErrorResponse(w, service.ListCreateErr, err)
@@ -98,20 +98,24 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 
 	s := user.Session{Token: token.Value}
 
-	err = s.Read(dbWorker)
+	err = s.Read(dbw)
 	if err != nil {
 		log.Error("Temporary code!!! Session read error: ", err)
 	}
 	log.Debug("session recieved: ", s)
 
-	authUsr, err := authWorker.IsUserLoggedIn(dbWorker, s.UserUuid)
+	authUsr, err := aw.IsUserLoggedIn(dbw, s.UserUuid)
 	if err != nil {
 		log.Error("Temporary code!!! authUser interface method error: ", err)
 	}
 	log.Debug("authUser recieved: ", authUsr)
 
 	//for now we ignore IsSuperuser
-	lists, err := todoLists.GetAllLists(dbWorker, authUsr)
+	var ausr authUser
+	ausr.UserUUID = s.UserUuid
+	ausr.IsSuperuser = true
+
+	lists, err := todoLists.GetAllLists(dbw, ausr)
 	if err != nil {
 		if err.Error() == "404" {
 			service.OkResponse(w, service.DefaultResponse{
@@ -173,7 +177,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = todoList.Update(dbWorker)
+	err = todoList.Update(dbw)
 	if err != nil {
 		if err.Error() == "404" {
 			service.NotFoundResponse(w, "")
@@ -221,7 +225,7 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	todoList := TodoList{ListUuid: id}
 
-	err = todoList.Delete(dbWorker)
+	err = todoList.Delete(dbw)
 
 	if err != nil {
 		if err.Error() == "404" {

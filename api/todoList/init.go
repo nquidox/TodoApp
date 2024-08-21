@@ -6,15 +6,19 @@ import (
 	"todoApp/types"
 )
 
+type dbWorker types.DatabaseWorker
+type authWorker types.AuthWorker
+type authUser struct{ types.AuthUser }
+
 var (
-	dbWorker   types.DatabaseWorker
-	authWorker types.AuthWorker
+	dbw types.DatabaseWorker
+	aw  types.AuthWorker
 )
 
-func Init(dbWrk types.DatabaseWorker, authWkr types.AuthWorker) {
+func Init(dbWrk dbWorker, authWkr authWorker) {
 	var err error
-	dbWorker = dbWrk
-	authWorker = authWkr
+	dbw = dbWrk
+	aw = authWkr
 
 	err = dbWrk.InitTable(&TodoList{})
 	if err != nil {
