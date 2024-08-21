@@ -11,8 +11,8 @@ type authWorker types.AuthWorker
 type authUser struct{ types.AuthUser }
 
 var (
-	dbw types.DatabaseWorker
-	aw  types.AuthWorker
+	dbw dbWorker
+	aw  authWorker
 )
 
 func Init(dbWrk dbWorker, authWkr authWorker) {

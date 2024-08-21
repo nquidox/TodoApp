@@ -60,7 +60,7 @@ func (r *readTodoList) GetAllLists(dbw dbWorker, aw authUser) ([]readTodoList, e
 }
 
 func (c *createTodoList) Update(dbw dbWorker) error {
-	params := map[string]any{"list_uuid": c.ListUuid}
+	params := map[string]any{"list_uuid": c.ListUuid, "owner_uuid": c.OwnerUuid}
 	err := dbw.UpdateRecordSubmodel(TodoList{}, c, params)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (c *createTodoList) Update(dbw dbWorker) error {
 }
 
 func (t *TodoList) Delete(dbw dbWorker) error {
-	params := map[string]any{"list_uuid": t.ListUuid}
+	params := map[string]any{"list_uuid": t.ListUuid, "owner_uuid": t.OwnerUuid}
 	err := dbw.DeleteRecord(t, params)
 	if err != nil {
 		return err

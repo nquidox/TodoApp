@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"todoApp/api/service"
-	"todoApp/api/user"
 )
 
 // CreateListHandler godoc
@@ -26,6 +25,24 @@ import (
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	todoList := createTodoList{}
+
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -49,6 +66,7 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	todoList.ListUuid = uuid.New()
+	todoList.OwnerUuid = aUser.UserUUID
 	err = todoList.Create(dbw)
 	if err != nil {
 		log.Error(service.ListCreateErr, err)
@@ -87,35 +105,27 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 //	@Router			/todo-lists [get]
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	todoLists := readTodoList{}
 
-	//FIXME: refactor this in the future
 	token, err := r.Cookie("token")
 	if err != nil {
-		log.Error("Temporary code!!! Cookie error: ", err)
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
 	}
-	log.Debug("token recieved: ", token.Value)
 
-	s := user.Session{Token: token.Value}
-
-	err = s.Read(dbw)
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
 	if err != nil {
-		log.Error("Temporary code!!! Session read error: ", err)
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
 	}
-	log.Debug("session recieved: ", s)
 
-	authUsr, err := aw.IsUserLoggedIn(dbw, s.UserUuid)
-	if err != nil {
-		log.Error("Temporary code!!! authUser interface method error: ", err)
-	}
-	log.Debug("authUser recieved: ", authUsr)
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
 
-	//for now we ignore IsSuperuser
-	var ausr authUser
-	ausr.UserUUID = s.UserUuid
-	ausr.IsSuperuser = true
-
-	lists, err := todoLists.GetAllLists(dbw, ausr)
+	todoLists := readTodoList{}
+	lists, err := todoLists.GetAllLists(dbw, aUser)
 	if err != nil {
 		if err.Error() == "404" {
 			service.OkResponse(w, service.DefaultResponse{
@@ -154,14 +164,29 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		log.Error(service.ParseErr, err)
 		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
-
-	todoList := createTodoList{ListUuid: id}
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -170,6 +195,7 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	todoList := createTodoList{ListUuid: id, OwnerUuid: aUser.UserUUID}
 	err = service.DeserializeJSON(data, &todoList)
 	if err != nil {
 		log.Error(service.JSONDeserializingErr, err)
@@ -217,14 +243,33 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 //	@Router			/todo-lists/{listId} [delete]
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
+
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		log.Error(service.ParseErr, err)
 		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
-	todoList := TodoList{ListUuid: id}
 
+	todoList := TodoList{ListUuid: id, OwnerUuid: aUser.UserUUID}
 	err = todoList.Delete(dbw)
 
 	if err != nil {
