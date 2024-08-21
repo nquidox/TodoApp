@@ -114,10 +114,16 @@ type AuthService struct {
 	types.AuthUser
 }
 
-func (a *AuthService) IsUserLoggedIn(wrk types.DatabaseWorker, id uuid.UUID) (types.AuthUser, error) {
-	params := map[string]any{"user_uuid": id}
+func (a *AuthService) IsUserLoggedIn(wrk types.DatabaseWorker, tokenValue string) (types.AuthUser, error) {
+	s := Session{Token: tokenValue}
+	err := s.Read(wrk)
+	if err != nil {
+		return a.AuthUser, err
+	}
 
-	err := wrk.ReadRecordSubmodel(User{}, a, params)
+	params := map[string]any{"user_uuid": s.UserUuid}
+
+	err = wrk.ReadRecordSubmodel(User{}, a, params)
 	if err != nil {
 		return a.AuthUser, err
 	}
