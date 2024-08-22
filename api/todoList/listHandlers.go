@@ -24,7 +24,6 @@ import (
 //	@Router			/todo-lists [post]
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	todoList := createTodoList{}
 
 	token, err := r.Cookie("token")
 	if err != nil {
@@ -43,6 +42,8 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	var aUser authUser
 	aUser.UserUUID = authUsr.UserUUID
 	aUser.IsSuperuser = authUsr.IsSuperuser
+
+	todoList := createTodoList{}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {

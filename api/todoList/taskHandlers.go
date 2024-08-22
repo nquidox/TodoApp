@@ -25,6 +25,24 @@ import (
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
+
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.BadRequestResponse(w, service.ParseErr, err)
@@ -39,7 +57,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task := createTask{TodoListId: id}
+	task := createTask{TodoListUUID: id}
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
@@ -56,16 +74,17 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newTask := Task{
-		Description: task.Description,
-		Title:       task.Title,
-		Completed:   "",
-		Status:      task.Status,
-		Priority:    task.Priority,
-		StartDate:   validateTime(task.StartDate),
-		Deadline:    validateTime(task.Deadline),
-		TaskId:      uuid.New(),
-		TodoListId:  task.TodoListId,
-		Order:       task.Order,
+		Description:  task.Description,
+		Title:        task.Title,
+		Completed:    "",
+		Status:       task.Status,
+		Priority:     task.Priority,
+		StartDate:    validateTime(task.StartDate),
+		Deadline:     validateTime(task.Deadline),
+		TaskUUID:     uuid.New(),
+		TodoListUUID: task.TodoListUUID,
+		Order:        task.Order,
+		OwnerUUID:    aUser.UserUUID,
 	}
 
 	err = newTask.Create(dbw)
@@ -100,6 +119,24 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
+
 	q := r.URL.Query()
 	count := validateQueryInt(q.Get("count"), 10)
 	page := validateQueryInt(q.Get("page"), 1)
@@ -111,7 +148,7 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks := Task{TodoListId: id}
+	tasks := Task{TodoListUUID: id, OwnerUUID: aUser.UserUUID}
 	log.WithFields(log.Fields{
 		"ListId": id,
 		"Count":  count,
@@ -158,6 +195,24 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
+
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.BadRequestResponse(w, service.ParseErr, err)
@@ -179,7 +234,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task := createTask{TaskId: taskId, TodoListId: listId}
+	task := createTask{TaskUUID: taskId, TodoListUUID: listId, OwnerUUID: aUser.UserUUID}
 
 	err = service.DeserializeJSON(data, &task)
 	if err != nil {
@@ -197,6 +252,11 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = task.Update(dbw)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
 		log.Error(service.TaskUpdateErr, err)
 		return
@@ -205,7 +265,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	service.OkResponse(w, task)
 
 	log.WithFields(log.Fields{
-		"task id": task.TaskId,
+		"task id": task.TaskUUID,
 	}).Info(service.TaskUpdateSuccess)
 }
 
@@ -226,6 +286,24 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	token, err := r.Cookie("token")
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.TokenReadErr, err.Error())
+		return
+	}
+
+	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	if err != nil {
+		service.UnauthorizedResponse(w, "")
+		log.Error(service.AuthErr, err)
+		return
+	}
+
+	var aUser authUser
+	aUser.UserUUID = authUsr.UserUUID
+	aUser.IsSuperuser = authUsr.IsSuperuser
+
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
 		service.BadRequestResponse(w, service.ParseErr, err)
@@ -240,9 +318,14 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t := Task{TodoListId: listId, TaskId: taskId}
+	t := Task{TodoListUUID: listId, TaskUUID: taskId, OwnerUUID: aUser.UserUUID}
 	err = t.Delete(dbw)
 	if err != nil {
+		if err.Error() == "404" {
+			service.NotFoundResponse(w, "")
+			log.Error(service.DBNotFound)
+			return
+		}
 		service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
 		log.Error(service.TaskDeleteErr, err)
 		return
@@ -250,7 +333,7 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	service.OkResponse(w, service.DefaultResponse{
 		ResultCode: 0,
-		HttpCode:   http.StatusOK,
+		HttpCode:   http.StatusNoContent,
 		Messages:   "",
 		Data:       "",
 	})
