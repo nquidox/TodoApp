@@ -23,7 +23,7 @@ import (
 func MeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
+	token, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.TokenReadErr, err)
@@ -154,7 +154,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/logout [get]
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
+	cookie, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
 		service.BadRequestResponse(w, service.CookieReadErr, err)
 		log.Error(service.CookieReadErr, err)

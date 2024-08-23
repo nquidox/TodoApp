@@ -7,7 +7,7 @@ import (
 )
 
 func (a *authUser) isAuth(w http.ResponseWriter, r *http.Request) error {
-	token, err := r.Cookie("token")
+	token, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.TokenReadErr, err.Error())

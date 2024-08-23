@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"todoApp/api/service"
 	"todoApp/types"
 
 	"net/http"
@@ -49,7 +51,7 @@ func (s *Session) Create(wrk types.DatabaseWorker, userUuid uuid.UUID) (http.Coo
 }
 
 func (s *Session) Read(wrk types.DatabaseWorker) error {
-	params := map[string]any{"token": s.Token}
+	params := map[string]any{service.SessionTokenName: s.Token}
 	err := wrk.ReadOneRecord(&s, params)
 	if err != nil {
 		return err
@@ -58,7 +60,7 @@ func (s *Session) Read(wrk types.DatabaseWorker) error {
 }
 
 func (s *Session) Delete(wrk types.DatabaseWorker) error {
-	params := map[string]any{"token": s.Token}
+	params := map[string]any{service.SessionTokenName: s.Token}
 	err := Worker.ReadOneRecord(s, params)
 	if err != nil {
 		return err
@@ -73,22 +75,34 @@ func (s *Session) Delete(wrk types.DatabaseWorker) error {
 
 func createSessionCookie(token string, expires time.Time) (http.Cookie, error) {
 	cookie := http.Cookie{
-		Name:     "token",
+		Name:     service.SessionTokenName,
 		Value:    token,
 		Path:     "/",
 		Expires:  expires,
 		Secure:   false,
 		HttpOnly: true,
 	}
+	log.WithFields(log.Fields{
+		"name":  service.SessionTokenName,
+		"value": token,
+	}).Debug()
 	return cookie, nil
 }
 
 func generateToken(length int) (string, error) {
 	bytes := make([]byte, length)
+
 	_, err := rand.Read(bytes)
 	if err != nil {
 		return "", err
 	}
+
 	bytes = append(bytes, SALT...)
-	return hex.EncodeToString(bytes), nil
+	value := hex.EncodeToString(bytes)
+
+	log.WithFields(log.Fields{
+		"value": value,
+	}).Debug("Generated token")
+
+	return value, nil
 }

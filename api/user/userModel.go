@@ -10,7 +10,7 @@ type User struct {
 	gorm.Model  `json:"-"`
 	ID          int       `json:"-"`
 	Email       string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=1"`
-	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word" extensions:"x-order=2"`
+	Password    string    `json:"-" binding:"required" example:"Very!Strong1Pa$$word" extensions:"x-order=2"`
 	Username    string    `json:"login" extensions:"x-order=3"`
 	Name        string    `json:"name" extensions:"x-order=4"`
 	Surname     string    `json:"surname" extensions:"x-order=5"`

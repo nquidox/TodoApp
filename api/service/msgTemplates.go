@@ -78,4 +78,8 @@ const (
 	TaskReadSuccess   = "Task read successfully "
 	TaskUpdateSuccess = "Task updated successfully "
 	TaskDeleteSuccess = "Task deleted successfully "
+
+	/* Service messages */
+
+	SessionTokenName = "token"
 )

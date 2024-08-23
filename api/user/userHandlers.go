@@ -219,7 +219,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
-	token, err := r.Cookie("token")
+	token, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
 		log.Error(service.TokenReadErr, err.Error())
 		service.BadRequestResponse(w, service.CookieReadErr, err)
