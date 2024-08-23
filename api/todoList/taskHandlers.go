@@ -25,23 +25,11 @@ import (
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
@@ -119,23 +107,11 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	q := r.URL.Query()
 	count := validateQueryInt(q.Get("count"), 10)
@@ -195,23 +171,11 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
@@ -286,23 +250,11 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	listId, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {

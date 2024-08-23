@@ -25,23 +25,11 @@ import (
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	todoList := createTodoList{}
 
@@ -107,23 +95,11 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	todoLists := readTodoList{}
 	lists, err := todoLists.GetAllLists(dbw, aUser)
@@ -165,17 +141,9 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
+	var aUser authUser
+	err := aUser.isAuth(w, r)
 	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
 		return
 	}
 
@@ -185,9 +153,6 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 		service.BadRequestResponse(w, service.ParseErr, err)
 		return
 	}
-	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -245,23 +210,11 @@ func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	token, err := r.Cookie("token")
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.TokenReadErr, err.Error())
-		return
-	}
-
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
-	if err != nil {
-		service.UnauthorizedResponse(w, "")
-		log.Error(service.AuthErr, err)
-		return
-	}
-
 	var aUser authUser
-	aUser.UserUUID = authUsr.UserUUID
-	aUser.IsSuperuser = authUsr.IsSuperuser
+	err := aUser.isAuth(w, r)
+	if err != nil {
+		return
+	}
 
 	id, err := uuid.Parse(r.PathValue("listId"))
 	if err != nil {
