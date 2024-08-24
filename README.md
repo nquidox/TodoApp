@@ -4,13 +4,23 @@
 Origin: https://social-network.samuraijs.com/docs
 
 ## Installation
-1. Install swagger and generate docs
-```sh
+1. Install swagger
+```go
 go install github.com/swaggo/swag/cmd/swag@latest
-swag init
 ```
 
-2. Create .env file and fill this params with your values:
+2. Change host in main.go
+```
+// @host    your.host.name
+```
+3. Generate docs
+```
+swag init
+```
+Default route for swagger docs: host:port/swagger/
+
+
+4. Create .env file and fill this params with your values:
 ```sh
 # DB params
 DB_HOST=localhost
@@ -29,8 +39,7 @@ APP_LOG_LEVEL=info
 DB_LOG_LEVEL=silent
 ```
 
-3. Build and run
-Default route for swagger docs: host:port/swagger/
+5. Build and run
 
 ## License
 ```
