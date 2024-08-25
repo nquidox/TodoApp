@@ -45,14 +45,14 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = usr.Read(Worker)
+	err = usr.Read(dbw)
 	if err != nil && err.Error() != "404" {
 		service.ConflictResponse(w, service.ConflictErr)
 		log.Error(service.ConflictErr, err)
 		return
 	}
 
-	err = usr.Create(Worker)
+	err = usr.Create(dbw)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.UserCreateErr, err)
 		log.Error(service.UserCreateErr, err)
@@ -89,7 +89,7 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 	target := targetUUID(w, r)
 
 	usr := readUser{UserUUID: target}
-	err := usr.Read(Worker)
+	err := usr.Read(dbw)
 	if err != nil {
 		if err.Error() == "404" {
 			service.NotFoundResponse(w, "")
@@ -147,7 +147,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = usr.Update(Worker)
+	err = usr.Update(dbw)
 	if err != nil {
 		if err.Error() == "404" {
 			service.NotFoundResponse(w, "")
@@ -195,7 +195,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	target := targetUUID(w, r)
 	usr := User{UserUUID: target}
 
-	err := usr.Delete(Worker)
+	err := usr.Delete(dbw)
 	if err != nil {
 		if err.Error() == "404" {
 			service.NotFoundResponse(w, "")
@@ -227,7 +227,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	}
 
 	s := Session{Token: token.Value}
-	err = s.Read(Worker)
+	err = s.Read(dbw)
 	if err != nil {
 		log.Error(service.TokenValidationErr, err)
 		service.UnauthorizedResponse(w, "")
@@ -245,7 +245,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	}
 
 	usr := User{UserUUID: s.UserUuid}
-	err = usr.Read(Worker)
+	err = usr.Read(dbw)
 	if err != nil {
 		log.Error(service.UserReadErr, err.Error())
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)

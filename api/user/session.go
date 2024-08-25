@@ -6,11 +6,9 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"todoApp/api/service"
-	"todoApp/types"
-
 	"net/http"
 	"time"
+	"todoApp/api/service"
 )
 
 var SALT []byte
@@ -24,7 +22,7 @@ type Session struct {
 	Expires    time.Time
 }
 
-func (s *Session) Create(wrk types.DatabaseWorker, userUuid uuid.UUID) (http.Cookie, error) {
+func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID) (http.Cookie, error) {
 	token, err := generateToken(32)
 	if err != nil {
 		return http.Cookie{}, err
@@ -50,7 +48,7 @@ func (s *Session) Create(wrk types.DatabaseWorker, userUuid uuid.UUID) (http.Coo
 	return cookie, nil
 }
 
-func (s *Session) Read(wrk types.DatabaseWorker) error {
+func (s *Session) Read(wrk dbWorker) error {
 	params := map[string]any{service.SessionTokenName: s.Token}
 	err := wrk.ReadOneRecord(&s, params)
 	if err != nil {
@@ -59,9 +57,9 @@ func (s *Session) Read(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (s *Session) Delete(wrk types.DatabaseWorker) error {
+func (s *Session) Delete(wrk dbWorker) error {
 	params := map[string]any{service.SessionTokenName: s.Token}
-	err := Worker.ReadOneRecord(s, params)
+	err := dbw.ReadOneRecord(s, params)
 	if err != nil {
 		return err
 	}

@@ -6,12 +6,14 @@ import (
 	"todoApp/types"
 )
 
-var Worker types.DatabaseWorker
+type dbWorker types.DatabaseWorker
 
-func Init(wrk types.DatabaseWorker) {
+var dbw dbWorker
+
+func Init(wrk dbWorker) {
 	var err error
 
-	Worker = wrk
+	dbw = wrk
 
 	err = wrk.InitTable(&User{})
 	if err != nil {

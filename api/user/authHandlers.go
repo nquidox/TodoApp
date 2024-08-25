@@ -31,7 +31,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := Session{Token: token.Value}
-	err = s.Read(Worker)
+	err = s.Read(dbw)
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.TokenValidationErr, err)
@@ -39,7 +39,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	me := meModel{UserUUID: s.UserUuid}
-	err = me.Read(Worker)
+	err = me.Read(dbw)
 	if err != nil {
 		service.BadRequestResponse(w, service.UserReadErr, err)
 		log.Error(service.UserReadErr, err)
@@ -102,7 +102,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	getUsr := User{Email: usr.Email}
-	err = getUsr.Read(Worker)
+	err = getUsr.Read(dbw)
 	if err != nil {
 		service.BadRequestResponse(w, service.EmailErr, err)
 		log.Error(service.EmailErr, err)
@@ -117,7 +117,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var s Session
-	cookie, err := s.Create(Worker, getUsr.UserUUID)
+	cookie, err := s.Create(dbw, getUsr.UserUUID)
 	if err != nil {
 		service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 		log.Error(service.SessionCreateErr, err)
@@ -162,7 +162,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := Session{Token: cookie.Value}
-	err = s.Delete(Worker)
+	err = s.Delete(dbw)
 	if err != nil {
 		service.UnauthorizedResponse(w, service.InvalidTokenErr)
 		log.Error(service.InvalidTokenErr)
