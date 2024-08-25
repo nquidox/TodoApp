@@ -27,7 +27,12 @@ func (db *DB) ReadOneRecord(model any, params map[string]any) error {
 	query := db.Connection
 
 	for key, value := range params {
-		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+		switch key {
+		case "model":
+			query = query.Model(params["model"])
+		default:
+			query = query.Where(fmt.Sprintf("%s = ?", key), value)
+		}
 	}
 
 	result := query.First(model)

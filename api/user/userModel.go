@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"todoApp/types"
 )
 
 type User struct {
@@ -53,7 +52,7 @@ type loginUserModel struct {
 	Password string `json:"password" extensions:"x-order=2"`
 }
 
-func (u *User) Create(wrk types.DatabaseWorker) error {
+func (u *User) Create(wrk dbWorker) error {
 	var err error
 	u.UserUUID = uuid.New()
 	u.IsSuperuser = false
@@ -70,7 +69,7 @@ func (u *User) Create(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (u *User) Read(wrk types.DatabaseWorker) error {
+func (u *User) Read(wrk dbWorker) error {
 	params := make(map[string]any)
 
 	switch {
@@ -87,7 +86,7 @@ func (u *User) Read(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (u *updateUser) Update(wrk types.DatabaseWorker) error {
+func (u *updateUser) Update(wrk dbWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
 	err := wrk.UpdateRecord(u, params)
 	if err != nil {
@@ -96,7 +95,7 @@ func (u *updateUser) Update(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (u *User) Delete(wrk types.DatabaseWorker) error {
+func (u *User) Delete(wrk dbWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
 	err := wrk.DeleteRecord(u, params)
 	if err != nil {
@@ -105,13 +104,10 @@ func (u *User) Delete(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (m *meModel) Read(wrk types.DatabaseWorker) error {
-	var usr User
+func (m *meModel) Read(wrk dbWorker) error {
 	params := map[string]any{"user_uuid": m.UserUUID}
-	err := wrk.ReadOneRecord(&usr, params)
-
-	m.Email = usr.Email
-	m.Username = usr.Username
+	params["model"] = User{}
+	err := wrk.ReadOneRecord(m, params)
 
 	if err != nil {
 		return err
@@ -119,9 +115,10 @@ func (m *meModel) Read(wrk types.DatabaseWorker) error {
 	return nil
 }
 
-func (r *readUser) Read(wrk types.DatabaseWorker) error {
+func (r *readUser) Read(wrk dbWorker) error {
 	params := make(map[string]any)
 
+	params["model"] = User{}
 	switch {
 	case r.UserUUID != uuid.Nil:
 		params["user_uuid"] = r.UserUUID
@@ -134,24 +131,4 @@ func (r *readUser) Read(wrk types.DatabaseWorker) error {
 		return err
 	}
 	return nil
-}
-
-type AuthService struct {
-	types.AuthUser
-}
-
-func (a *AuthService) IsUserLoggedIn(wrk types.DatabaseWorker, tokenValue string) (types.AuthUser, error) {
-	s := Session{Token: tokenValue}
-	err := s.Read(wrk)
-	if err != nil {
-		return a.AuthUser, err
-	}
-
-	params := map[string]any{"user_uuid": s.UserUuid}
-
-	err = wrk.ReadRecordSubmodel(User{}, a, params)
-	if err != nil {
-		return a.AuthUser, err
-	}
-	return a.AuthUser, nil
 }
