@@ -1,10 +1,14 @@
 package user
 
-import "errors"
+import (
+	"errors"
+	"net/mail"
+)
 
 func (u *User) CheckRequiredFields() error {
-	if u.Email == "" {
-		return errors.New("email is required")
+	_, err := mail.ParseAddress(u.Email)
+	if err != nil {
+		return err
 	}
 
 	if u.Password == "" {
