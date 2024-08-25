@@ -88,7 +88,7 @@ func ReadUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	target := targetUUID(w, r)
 
-	usr := User{UserUUID: target}
+	usr := readUser{UserUUID: target}
 	err := usr.Read(Worker)
 	if err != nil {
 		if err.Error() == "404" {
