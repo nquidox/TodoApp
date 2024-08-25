@@ -21,8 +21,6 @@ func (a *authUser) isAuth(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	a.UserUUID = authUsr.UserUUID
-	a.IsSuperuser = authUsr.IsSuperuser
-
+	a.AuthUser = authUsr
 	return nil
 }
