@@ -6,7 +6,6 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 	"todoApp/api/todoList"
-	"todoApp/api/user"
 	_ "todoApp/docs"
 )
 
@@ -18,8 +17,7 @@ func NewApiServer(host, port string) *ApiServer {
 	return &ApiServer{Addr: host + ":" + port}
 }
 
-func (s *ApiServer) Run() error {
-	router := http.NewServeMux()
+func (s *ApiServer) Run(router *http.ServeMux) error {
 	server := &http.Server{Addr: s.Addr, Handler: corsMiddleware(router)}
 
 	router.HandleFunc("GET /api/v1", func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +26,6 @@ func (s *ApiServer) Run() error {
 
 	router.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 
-	user.AddRoutes(router)
 	todoList.AddRoutes(router)
 
 	log.Info("Starting server on ", s.Addr)

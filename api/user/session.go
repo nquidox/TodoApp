@@ -11,8 +11,6 @@ import (
 	"todoApp/api/service"
 )
 
-var SALT []byte
-
 type Session struct {
 	gorm.Model
 	Id         int
@@ -22,8 +20,8 @@ type Session struct {
 	Expires    time.Time
 }
 
-func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID) (http.Cookie, error) {
-	token, err := generateToken(32)
+func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte) (http.Cookie, error) {
+	token, err := generateToken(32, salt)
 	if err != nil {
 		return http.Cookie{}, err
 	}
@@ -59,7 +57,7 @@ func (s *Session) Read(wrk dbWorker) error {
 
 func (s *Session) Delete(wrk dbWorker) error {
 	params := map[string]any{service.SessionTokenName: s.Token}
-	err := dbw.ReadOneRecord(s, params)
+	err := wrk.ReadOneRecord(s, params)
 	if err != nil {
 		return err
 	}
@@ -87,7 +85,7 @@ func createSessionCookie(token string, expires time.Time) (http.Cookie, error) {
 	return cookie, nil
 }
 
-func generateToken(length int) (string, error) {
+func generateToken(length int, salt []byte) (string, error) {
 	bytes := make([]byte, length)
 
 	_, err := rand.Read(bytes)
@@ -95,7 +93,7 @@ func generateToken(length int) (string, error) {
 		return "", err
 	}
 
-	bytes = append(bytes, SALT...)
+	bytes = append(bytes, salt...)
 	value := hex.EncodeToString(bytes)
 
 	log.WithFields(log.Fields{

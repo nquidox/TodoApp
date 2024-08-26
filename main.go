@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"path"
 	"runtime"
 	"todoApp/api/todoList"
@@ -12,6 +13,33 @@ import (
 	"todoApp/db"
 	"todoApp/types"
 )
+
+type todoApp struct {
+	dbWorker   types.DatabaseWorker
+	authWorker types.AuthWorker
+	salt       []byte
+	server     *ApiServer
+	router     *http.ServeMux
+}
+
+func (t *todoApp) Init() error {
+	user.Init(&user.Service{
+		DbWorker:   t.dbWorker,
+		AuthWorker: t.authWorker,
+		Salt:       t.salt,
+		Router:     t.router,
+	})
+	return nil
+}
+
+func (t *todoApp) Run() error {
+	todoList.Init(t.dbWorker, t.authWorker)
+
+	if err := t.server.Run(t.router); err != nil {
+		log.Fatal(err)
+	}
+	return nil
+}
 
 // @title						TODO App API
 // @version					1.0
@@ -33,13 +61,13 @@ import (
 // @externalDocs.description	OpenAPI
 // @externalDocs.url			https://swagger.io/resources/open-api/
 func main() {
-	if err := godotenv.Load(); err != nil {
+	var err error
+	if err = godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 	c := config.New()
 
 	log.SetLevel(appSetLogLevel(c.Config.AppLogLevel))
-
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "02-01-2006 15:04:05",
@@ -49,17 +77,21 @@ func main() {
 		},
 	})
 
-	user.SALT = []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu")
+	app := todoApp{
+		dbWorker:   &db.DB{Connection: db.Connect(c)},
+		authWorker: &user.AuthService{},
+		salt:       []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu"),
+		server:     NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort),
+		router:     http.NewServeMux(),
+	}
 
-	var dbWorker types.DatabaseWorker = &db.DB{Connection: db.Connect(c)}
-	var authWorker types.AuthWorker = &user.AuthService{}
+	err = app.Init()
+	if err != nil {
+		log.WithError(err).Fatal("Error initializing server")
+	}
 
-	user.Init(dbWorker)
-	todoList.Init(dbWorker, authWorker)
-
-	server := NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort)
-
-	if err := server.Run(); err != nil {
-		log.Fatal(err)
+	err = app.Run()
+	if err != nil {
+		log.WithError(err).Fatal("Error starting server")
 	}
 }

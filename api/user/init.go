@@ -2,26 +2,32 @@ package user
 
 import (
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"todoApp/api/service"
 	"todoApp/types"
 )
 
 type dbWorker types.DatabaseWorker
 
-var dbw dbWorker
+type Service struct {
+	DbWorker   types.DatabaseWorker
+	AuthWorker types.AuthWorker
+	Salt       []byte
+	Router     *http.ServeMux
+}
 
-func Init(wrk dbWorker) {
+func Init(s *Service) {
 	var err error
 
-	dbw = wrk
-
-	err = wrk.InitTable(&User{})
+	err = s.DbWorker.InitTable(&User{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = wrk.InitTable(&Session{})
+	err = s.DbWorker.InitTable(&Session{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
+
+	addRoutes(s)
 }

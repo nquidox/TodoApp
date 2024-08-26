@@ -1,17 +1,24 @@
 package user
 
-import (
-	"net/http"
-)
+func addRoutes(s *Service) {
+	createUserHandler := createUserFunc(s)
+	s.Router.HandleFunc("POST /api/v1/user", createUserHandler)
 
-func AddRoutes(router *http.ServeMux) {
-	router.HandleFunc("POST /api/v1/user", CreateUserHandler)
-	router.HandleFunc("GET /api/v1/user/{id}", ReadUserHandler)
-	router.HandleFunc("PUT /api/v1/user/{id}", UpdateUserHandler)
-	router.HandleFunc("DELETE /api/v1/user/{id}", DeleteUserHandler)
+	readUserHandler := readUserFunc(s)
+	s.Router.HandleFunc("GET /api/v1/user/{id}", readUserHandler)
 
-	router.HandleFunc("POST /api/v1/login", LoginHandler)
-	router.HandleFunc("GET /api/v1/logout", LogoutHandler)
+	updateUserHandler := updateUserFunc(s)
+	s.Router.HandleFunc("PUT /api/v1/user/{id}", updateUserHandler)
 
-	router.HandleFunc("GET /api/v1/me", MeHandler)
+	deleteUserHandler := deleteUserFunc(s)
+	s.Router.HandleFunc("DELETE /api/v1/user/{id}", deleteUserHandler)
+
+	loginHandler := loginFunc(s)
+	s.Router.HandleFunc("POST /api/v1/login", loginHandler)
+
+	logoutHandler := logoutFunc(s)
+	s.Router.HandleFunc("GET /api/v1/logout", logoutHandler)
+
+	meHandler := meFunc(s)
+	s.Router.HandleFunc("GET /api/v1/me", meHandler)
 }

@@ -10,7 +10,7 @@ type User struct {
 	ID          int       `json:"-"`
 	Email       string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=1"`
 	Password    string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word" extensions:"x-order=2"`
-	Username    string    `json:"login" extensions:"x-order=3"`
+	Username    string    `json:"loginFunc" extensions:"x-order=3"`
 	Name        string    `json:"name" extensions:"x-order=4"`
 	Surname     string    `json:"surname" extensions:"x-order=5"`
 	UserUUID    uuid.UUID `json:"-"`
@@ -21,14 +21,14 @@ type readUser struct {
 	UserUUID uuid.UUID `json:"id" extensions:"x-order=1"`
 	Email    string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=2"`
 	Password string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word" extensions:"x-order=3"`
-	Username string    `json:"login" extensions:"x-order=4"`
+	Username string    `json:"loginFunc" extensions:"x-order=4"`
 	Name     string    `json:"name" extensions:"x-order=5"`
 	Surname  string    `json:"surname" extensions:"x-order=6"`
 }
 
 type updateUser struct {
 	UserUUID uuid.UUID `json:"-"`
-	Username string    `json:"login" extensions:"x-order=1"`
+	Username string    `json:"loginFunc" extensions:"x-order=1"`
 	Email    string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=2"`
 	Name     string    `json:"name" extensions:"x-order=3"`
 	Surname  string    `json:"surname" extensions:"x-order=4"`
@@ -37,7 +37,7 @@ type updateUser struct {
 type meModel struct {
 	UserUUID uuid.UUID `json:"id" extensions:"x-order=1"`
 	Email    string    `json:"email" extensions:"x-order=2"`
-	Username string    `json:"login" extensions:"x-order=3"`
+	Username string    `json:"loginFunc" extensions:"x-order=3"`
 }
 
 type meResponse struct {
