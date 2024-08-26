@@ -2,31 +2,34 @@ package todoList
 
 import (
 	"log"
+	"net/http"
 	"todoApp/api/service"
 	"todoApp/types"
 )
 
-type dbWorker types.DatabaseWorker
-type authWorker types.AuthWorker
-type authUser struct{ types.AuthUser }
-
-var (
-	dbw dbWorker
-	aw  authWorker
+type (
+	dbWorker types.DatabaseWorker
+	authUser struct{ types.AuthUser }
 )
 
-func Init(dbWrk dbWorker, authWkr authWorker) {
+type Service struct {
+	DbWorker   types.DatabaseWorker
+	AuthWorker types.AuthWorker
+	Router     *http.ServeMux
+}
+
+func Init(s *Service) {
 	var err error
-	dbw = dbWrk
-	aw = authWkr
 
-	err = dbWrk.InitTable(&TodoList{})
+	err = s.DbWorker.InitTable(&TodoList{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
 
-	err = dbWrk.InitTable(&Task{})
+	err = s.DbWorker.InitTable(&Task{})
 	if err != nil {
 		log.Fatal(service.TableInitErr, err)
 	}
+
+	addRoutes(s)
 }

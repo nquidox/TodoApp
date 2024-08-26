@@ -1,17 +1,28 @@
 package todoList
 
-import (
-	"net/http"
-)
+func addRoutes(s *Service) {
 
-func AddRoutes(router *http.ServeMux) {
-	router.HandleFunc("POST /api/v1/todo-lists", CreateListHandler)
-	router.HandleFunc("GET /api/v1/todo-lists", GetAllListsHandler)
-	router.HandleFunc("PUT /api/v1/todo-lists/{listId}", UpdateListHandler)
-	router.HandleFunc("DELETE /api/v1/todo-lists/{listId}", DeleteListHandler)
+	createListHandler := createListFunc(s)
+	s.Router.HandleFunc("POST /api/v1/todo-lists", createListHandler)
 
-	router.HandleFunc("POST /api/v1/todo-lists/{listId}/tasks", CreateTaskHandler)
-	router.HandleFunc("GET /api/v1/todo-lists/{listId}/tasks", GetTaskHandler)
-	router.HandleFunc("PUT /api/v1/todo-lists/{listId}/tasks/{taskId}", UpdateTaskHandler)
-	router.HandleFunc("DELETE /api/v1/todo-lists/{listId}/tasks/{taskId}", DeleteTaskHandler)
+	getAllListsHandler := getAllListsFunc(s)
+	s.Router.HandleFunc("GET /api/v1/todo-lists", getAllListsHandler)
+
+	updateListHandler := updateListFunc(s)
+	s.Router.HandleFunc("PUT /api/v1/todo-lists/{listId}", updateListHandler)
+
+	deleteListHandler := deleteListFunc(s)
+	s.Router.HandleFunc("DELETE /api/v1/todo-lists/{listId}", deleteListHandler)
+
+	createTaskHandler := createTaskFunc(s)
+	s.Router.HandleFunc("POST /api/v1/todo-lists/{listId}/tasks", createTaskHandler)
+
+	getTaskHandler := getTaskFunc(s)
+	s.Router.HandleFunc("GET /api/v1/todo-lists/{listId}/tasks", getTaskHandler)
+
+	updateTaskHandler := updateTaskFunc(s)
+	s.Router.HandleFunc("PUT /api/v1/todo-lists/{listId}/tasks/{taskId}", updateTaskHandler)
+
+	deleteTaskHandler := deleteTaskFunc(s)
+	s.Router.HandleFunc("DELETE /api/v1/todo-lists/{listId}/tasks/{taskId}", deleteTaskHandler)
 }

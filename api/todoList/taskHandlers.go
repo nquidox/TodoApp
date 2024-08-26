@@ -8,7 +8,7 @@ import (
 	"todoApp/api/service"
 )
 
-// CreateTaskHandler godoc
+// createTaskFunc godoc
 //
 //	@Summary		Create task list
 //	@Description	Creates new task. Time format example: "02-01-2006 15:04:05"
@@ -22,74 +22,75 @@ import (
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks [post]
-func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func createTaskFunc(s *Service) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var aUser authUser
+		err := aUser.isAuth(w, r, s)
+		if err != nil {
+			return
+		}
 
-	var aUser authUser
-	err := aUser.isAuth(w, r)
-	if err != nil {
-		return
-	}
+		id, err := uuid.Parse(r.PathValue("listId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
 
-	id, err := uuid.Parse(r.PathValue("listId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			service.BadRequestResponse(w, service.BodyReadErr, err)
+			log.Error(service.BodyReadErr, err)
+			return
+		}
 
-	data, err := io.ReadAll(r.Body)
-	if err != nil {
-		service.BadRequestResponse(w, service.BodyReadErr, err)
-		log.Error(service.BodyReadErr, err)
-		return
-	}
+		task := createTask{TodoListUUID: id}
 
-	task := createTask{TodoListUUID: id}
+		err = service.DeserializeJSON(data, &task)
+		if err != nil {
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			log.Error(service.JSONDeserializingErr, err)
+			return
+		}
 
-	err = service.DeserializeJSON(data, &task)
-	if err != nil {
-		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
-		log.Error(service.JSONDeserializingErr, err)
-		return
-	}
+		err = task.validateTitle()
+		if err != nil {
+			service.BadRequestResponse(w, service.ValidationErr, err)
+			log.Error(service.ValidationErr, err)
+			return
+		}
 
-	err = task.validateTitle()
-	if err != nil {
-		service.BadRequestResponse(w, service.ValidationErr, err)
-		log.Error(service.ValidationErr, err)
-		return
-	}
+		newTask := Task{
+			Description:  task.Description,
+			Title:        task.Title,
+			Completed:    "",
+			Status:       task.Status,
+			Priority:     task.Priority,
+			StartDate:    validateTime(task.StartDate),
+			Deadline:     validateTime(task.Deadline),
+			TaskUUID:     uuid.New(),
+			TodoListUUID: task.TodoListUUID,
+			Order:        task.Order,
+			OwnerUUID:    aUser.UserUUID,
+		}
 
-	newTask := Task{
-		Description:  task.Description,
-		Title:        task.Title,
-		Completed:    "",
-		Status:       task.Status,
-		Priority:     task.Priority,
-		StartDate:    validateTime(task.StartDate),
-		Deadline:     validateTime(task.Deadline),
-		TaskUUID:     uuid.New(),
-		TodoListUUID: task.TodoListUUID,
-		Order:        task.Order,
-		OwnerUUID:    aUser.UserUUID,
-	}
+		err = newTask.Create(s.DbWorker)
+		if err != nil {
+			service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
+			log.Error(service.TaskCreateErr, err)
+			return
+		}
 
-	err = newTask.Create(dbw)
-	if err != nil {
-		service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
-		log.Error(service.TaskCreateErr, err)
-		return
-	}
+		service.OkResponse(w, task)
 
-	service.OkResponse(w, task)
-
-	log.WithFields(log.Fields{
-		"Title": task.Title,
-	}).Info(service.TaskCreateSuccess)
+		log.WithFields(log.Fields{
+			"Title": task.Title,
+		}).Info(service.TaskCreateSuccess)
+	})
 }
 
-// GetTaskHandler godoc
+// getTaskFunc godoc
 //
 //	@Summary		Get tasks
 //	@Description	Requests all tasks with query parameters. Count and page params are optional. Defaults: count=10, page=1
@@ -104,56 +105,58 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks [get]
-func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func getTaskFunc(s *Service) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-	var aUser authUser
-	err := aUser.isAuth(w, r)
-	if err != nil {
-		return
-	}
-
-	q := r.URL.Query()
-	count := validateQueryInt(q.Get("count"), 10)
-	page := validateQueryInt(q.Get("page"), 1)
-
-	id, err := uuid.Parse(r.PathValue("listId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
-
-	tasks := Task{TodoListUUID: id, OwnerUUID: aUser.UserUUID}
-	log.WithFields(log.Fields{
-		"ListId": id,
-		"Count":  count,
-		"Page":   page,
-	}).Debug("Query and path params")
-
-	read, err := tasks.Read(dbw, count, page)
-	if err != nil {
-		//if no records found, return success 204 no content instead of 404
-		if err.Error() == "404" {
-			service.OkResponse(w, service.DefaultResponse{
-				ResultCode: 0,
-				HttpCode:   http.StatusNoContent,
-				Messages:   "",
-				Data:       nil,
-			})
+		var aUser authUser
+		err := aUser.isAuth(w, r, s)
+		if err != nil {
 			return
 		}
-		service.InternalServerErrorResponse(w, service.TaskReadErr, err)
-		log.Error(service.TaskReadErr, err)
-		return
-	}
 
-	service.OkResponse(w, read)
+		q := r.URL.Query()
+		count := validateQueryInt(q.Get("count"), 10)
+		page := validateQueryInt(q.Get("page"), 1)
 
-	log.Info(service.TaskReadSuccess)
+		id, err := uuid.Parse(r.PathValue("listId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
+
+		tasks := Task{TodoListUUID: id, OwnerUUID: aUser.UserUUID}
+		log.WithFields(log.Fields{
+			"ListId": id,
+			"Count":  count,
+			"Page":   page,
+		}).Debug("Query and path params")
+
+		read, err := tasks.Read(s.DbWorker, count, page)
+		if err != nil {
+			//if no records found, return success 204 no content instead of 404
+			if err.Error() == "404" {
+				service.OkResponse(w, service.DefaultResponse{
+					ResultCode: 0,
+					HttpCode:   http.StatusNoContent,
+					Messages:   "",
+					Data:       nil,
+				})
+				return
+			}
+			service.InternalServerErrorResponse(w, service.TaskReadErr, err)
+			log.Error(service.TaskReadErr, err)
+			return
+		}
+
+		service.OkResponse(w, read)
+
+		log.Info(service.TaskReadSuccess)
+	})
 }
 
-// UpdateTaskHandler godoc
+// updateTaskFunc godoc
 //
 //	@Summary		Update task
 //	@Description	Updates task
@@ -168,72 +171,74 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [put]
-func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func updateTaskFunc(s *Service) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-	var aUser authUser
-	err := aUser.isAuth(w, r)
-	if err != nil {
-		return
-	}
-
-	listId, err := uuid.Parse(r.PathValue("listId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
-
-	taskId, err := uuid.Parse(r.PathValue("taskId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
-
-	data, err := io.ReadAll(r.Body)
-	if err != nil {
-		service.BadRequestResponse(w, service.BodyReadErr, err)
-		log.Error(service.BodyReadErr, err)
-		return
-	}
-
-	task := createTask{TaskUUID: taskId, TodoListUUID: listId, OwnerUUID: aUser.UserUUID}
-
-	err = service.DeserializeJSON(data, &task)
-	if err != nil {
-		service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
-		log.Error(service.JSONDeserializingErr, err)
-		return
-	}
-
-	err = task.validateTitle()
-	if err != nil {
-		service.BadRequestResponse(w, service.ValidationErr, err)
-		log.Error(service.ValidationErr, err)
-		return
-	}
-
-	err = task.Update(dbw)
-	if err != nil {
-		if err.Error() == "404" {
-			service.NotFoundResponse(w, "")
-			log.Error(service.DBNotFound)
+		var aUser authUser
+		err := aUser.isAuth(w, r, s)
+		if err != nil {
 			return
 		}
-		service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
-		log.Error(service.TaskUpdateErr, err)
-		return
-	}
 
-	service.OkResponse(w, task)
+		listId, err := uuid.Parse(r.PathValue("listId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
 
-	log.WithFields(log.Fields{
-		"task id": task.TaskUUID,
-	}).Info(service.TaskUpdateSuccess)
+		taskId, err := uuid.Parse(r.PathValue("taskId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
+
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			service.BadRequestResponse(w, service.BodyReadErr, err)
+			log.Error(service.BodyReadErr, err)
+			return
+		}
+
+		task := createTask{TaskUUID: taskId, TodoListUUID: listId, OwnerUUID: aUser.UserUUID}
+
+		err = service.DeserializeJSON(data, &task)
+		if err != nil {
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			log.Error(service.JSONDeserializingErr, err)
+			return
+		}
+
+		err = task.validateTitle()
+		if err != nil {
+			service.BadRequestResponse(w, service.ValidationErr, err)
+			log.Error(service.ValidationErr, err)
+			return
+		}
+
+		err = task.Update(s.DbWorker)
+		if err != nil {
+			if err.Error() == "404" {
+				service.NotFoundResponse(w, "")
+				log.Error(service.DBNotFound)
+				return
+			}
+			service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
+			log.Error(service.TaskUpdateErr, err)
+			return
+		}
+
+		service.OkResponse(w, task)
+
+		log.WithFields(log.Fields{
+			"task id": task.TaskUUID,
+		}).Info(service.TaskUpdateSuccess)
+	})
 }
 
-// DeleteTaskHandler godoc
+// deleteTaskFunc godoc
 //
 //	@Summary		Delete task
 //	@Description	Deletes task
@@ -247,50 +252,52 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [delete]
-func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func deleteTaskFunc(s *Service) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-	var aUser authUser
-	err := aUser.isAuth(w, r)
-	if err != nil {
-		return
-	}
-
-	listId, err := uuid.Parse(r.PathValue("listId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
-
-	taskId, err := uuid.Parse(r.PathValue("taskId"))
-	if err != nil {
-		service.BadRequestResponse(w, service.ParseErr, err)
-		log.Error(service.ParseErr, err)
-		return
-	}
-
-	t := Task{TodoListUUID: listId, TaskUUID: taskId, OwnerUUID: aUser.UserUUID}
-	err = t.Delete(dbw)
-	if err != nil {
-		if err.Error() == "404" {
-			service.NotFoundResponse(w, "")
-			log.Error(service.DBNotFound)
+		var aUser authUser
+		err := aUser.isAuth(w, r, s)
+		if err != nil {
 			return
 		}
-		service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
-		log.Error(service.TaskDeleteErr, err)
-		return
-	}
 
-	service.OkResponse(w, service.DefaultResponse{
-		ResultCode: 0,
-		HttpCode:   http.StatusNoContent,
-		Messages:   "",
-		Data:       "",
+		listId, err := uuid.Parse(r.PathValue("listId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
+
+		taskId, err := uuid.Parse(r.PathValue("taskId"))
+		if err != nil {
+			service.BadRequestResponse(w, service.ParseErr, err)
+			log.Error(service.ParseErr, err)
+			return
+		}
+
+		t := Task{TodoListUUID: listId, TaskUUID: taskId, OwnerUUID: aUser.UserUUID}
+		err = t.Delete(s.DbWorker)
+		if err != nil {
+			if err.Error() == "404" {
+				service.NotFoundResponse(w, "")
+				log.Error(service.DBNotFound)
+				return
+			}
+			service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
+			log.Error(service.TaskDeleteErr, err)
+			return
+		}
+
+		service.OkResponse(w, service.DefaultResponse{
+			ResultCode: 0,
+			HttpCode:   http.StatusNoContent,
+			Messages:   "",
+			Data:       "",
+		})
+
+		log.WithFields(log.Fields{
+			"id": t.ID,
+		}).Info(service.TaskDeleteSuccess)
 	})
-
-	log.WithFields(log.Fields{
-		"id": t.ID,
-	}).Info(service.TaskDeleteSuccess)
 }

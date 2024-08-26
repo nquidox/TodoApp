@@ -5,7 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
-	"todoApp/api/todoList"
 	_ "todoApp/docs"
 )
 
@@ -25,8 +24,6 @@ func (s *ApiServer) Run(router *http.ServeMux) error {
 	})
 
 	router.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
-
-	todoList.AddRoutes(router)
 
 	log.Info("Starting server on ", s.Addr)
 	return server.ListenAndServe()

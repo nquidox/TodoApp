@@ -6,7 +6,7 @@ import (
 	"todoApp/api/service"
 )
 
-func (a *authUser) isAuth(w http.ResponseWriter, r *http.Request) error {
+func (a *authUser) isAuth(w http.ResponseWriter, r *http.Request, s *Service) error {
 	token, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
@@ -14,7 +14,7 @@ func (a *authUser) isAuth(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	authUsr, err := aw.IsUserLoggedIn(dbw, token.Value)
+	authUsr, err := s.AuthWorker.IsUserLoggedIn(s.DbWorker, token.Value)
 	if err != nil {
 		service.UnauthorizedResponse(w, "")
 		log.Error(service.AuthErr, err)

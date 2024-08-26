@@ -29,11 +29,16 @@ func (t *todoApp) Init() error {
 		Salt:       t.salt,
 		Router:     t.router,
 	})
+
+	todoList.Init(&todoList.Service{
+		DbWorker:   t.dbWorker,
+		AuthWorker: t.authWorker,
+		Router:     t.router,
+	})
 	return nil
 }
 
 func (t *todoApp) Run() error {
-	todoList.Init(t.dbWorker, t.authWorker)
 
 	if err := t.server.Run(t.router); err != nil {
 		log.Fatal(err)
