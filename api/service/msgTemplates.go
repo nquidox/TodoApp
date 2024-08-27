@@ -88,4 +88,7 @@ const (
 	EmailSubject         = "Verify your email address"
 	EmailSendErr         = "Error sending email "
 	EmailVerificationErr = "Email verification error "
+	AlreadyVerified      = "Already verified "
+	VerificationKeySent  = "Verification key sent "
+	VerificationSuccess  = "Verification success "
 )
