@@ -53,12 +53,27 @@ func createUserFunc(s *Service) http.HandlerFunc {
 			return
 		}
 
+		verficationKey, err := generateEmailVerificationKey()
+		if err != nil {
+			service.InternalServerErrorResponse(w, service.VerificationKeyErr, err)
+			log.Error(service.VerificationKeyErr, err)
+		}
+
+		usr.EmailVerificationKey = verficationKey
+
 		err = usr.Create(s.DbWorker)
 		if err != nil {
 			service.InternalServerErrorResponse(w, service.UserCreateErr, err)
 			log.Error(service.UserCreateErr, err)
 			return
 		}
+
+		err = sendVerificationEmail(usr.Email, verficationKey, s)
+		if err != nil {
+			log.Error(service.EmailSendErr, err)
+			return
+		}
+		log.Debug("Verification link sent")
 
 		service.OkResponse(w, usr)
 

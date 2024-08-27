@@ -21,4 +21,7 @@ func addRoutes(s *Service) {
 
 	meHandler := meFunc(s)
 	s.Router.HandleFunc("GET /api/v1/me", meHandler)
+
+	emailHandler := emailFunc(s)
+	s.Router.HandleFunc("POST /api/v1/verifyEmail/{key}", emailHandler)
 }

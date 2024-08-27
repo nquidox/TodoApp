@@ -20,6 +20,7 @@ type todoApp struct {
 	salt       []byte
 	server     *ApiServer
 	router     *http.ServeMux
+	config     *config.Config
 }
 
 func (t *todoApp) Init() error {
@@ -28,6 +29,7 @@ func (t *todoApp) Init() error {
 		AuthWorker: t.authWorker,
 		Salt:       t.salt,
 		Router:     t.router,
+		Config:     t.config,
 	})
 
 	todoList.Init(&todoList.Service{
@@ -35,11 +37,11 @@ func (t *todoApp) Init() error {
 		AuthWorker: t.authWorker,
 		Router:     t.router,
 	})
+
 	return nil
 }
 
 func (t *todoApp) Run() error {
-
 	if err := t.server.Run(t.router); err != nil {
 		log.Fatal(err)
 	}
@@ -88,6 +90,7 @@ func main() {
 		salt:       []byte("hglI##ERgf9D)9e5v_*ZqS=H4JN9fFAu"),
 		server:     NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort),
 		router:     http.NewServeMux(),
+		config:     c,
 	}
 
 	err = app.Init()

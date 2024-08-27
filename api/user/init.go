@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"todoApp/api/service"
+	"todoApp/config"
 	"todoApp/types"
 )
 
@@ -14,6 +15,7 @@ type Service struct {
 	AuthWorker types.AuthWorker
 	Salt       []byte
 	Router     *http.ServeMux
+	Config     *config.Config
 }
 
 func Init(s *Service) {

@@ -11,20 +11,21 @@ const (
 
 	/* User Errors */
 
-	UserCreateErr = "User create error"
-	UserReadErr   = "User read error"
-	UserUpdateErr = "User update error"
-	UserDeleteErr = "User delete error"
-	EmailErr      = "Email is incorrect"
-	PasswordErr   = "Password is incorrect "
-	ConflictErr   = "Already exists"
+	UserCreateErr      = "User create error "
+	UserReadErr        = "User read error "
+	UserUpdateErr      = "User update error "
+	UserDeleteErr      = "User delete error "
+	EmailErr           = "Email is incorrect "
+	PasswordErr        = "Password is incorrect "
+	ConflictErr        = "Already exists "
+	VerificationKeyErr = "Can't generate verification key "
 
 	/* Session Errors */
 
 	SessionCreateErr   = "Session create error "
 	SessionCloseErr    = "Session close error "
 	CookieReadErr      = "Cookie read error "
-	InvalidTokenErr    = "Invalid token"
+	InvalidTokenErr    = "Invalid token "
 	TokenReadErr       = "Error getting token "
 	TokenValidationErr = "Error validating token "
 	UUIDParseErr       = "Error parsing uuid "
@@ -82,4 +83,9 @@ const (
 	/* Service messages */
 
 	SessionTokenName = "token"
+
+	/* Email messages */
+	EmailSubject         = "Verify your email address"
+	EmailSendErr         = "Error sending email "
+	EmailVerificationErr = "Email verification error "
 )
