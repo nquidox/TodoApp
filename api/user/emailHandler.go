@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 	"net/http"
+	"time"
 	"todoApp/api/service"
 )
 
@@ -43,6 +44,16 @@ func emailFunc(s *Service) http.HandlerFunc {
 		if err != nil {
 			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
 			log.Error(service.EmailVerificationErr, err)
+			return
+		}
+
+		if time.Since(usr.EmailKeyCreatedAt) >= 24*time.Hour {
+			service.OkResponse(w, service.DefaultResponse{
+				ResultCode: 1,
+				HttpCode:   http.StatusGone,
+				Messages:   service.VerificationExpired,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -103,6 +114,8 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 		}
 
 		usr.EmailVerificationKey = newKey
+		usr.EmailKeyCreatedAt = time.Now()
+
 		err = usr.Update(s.DbWorker)
 		if err != nil {
 			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
@@ -132,8 +145,8 @@ func sendVerificationEmail(email string, verificationKey string, s *Service) err
 
 	m.SetHeader("From", s.Config.Config.EmailReply)
 	m.SetHeader("To", email)
-	m.SetHeader("Subject", "")
-	body := fmt.Sprintf("<html>Please verify your e-mail by following this link %s</html>", verificationKey)
+	m.SetHeader("Subject", service.EmailSubject)
+	body := fmt.Sprintf("<html>Please verify your e-mail by following this link <a href='http://localhost:9000/%[1]s'>%[1]s</a></html>", verificationKey)
 	m.SetBody("text/html", body)
 
 	d := gomail.NewDialer(

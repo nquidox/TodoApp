@@ -1,8 +1,10 @@
 package user
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type User struct {
@@ -11,6 +13,7 @@ type User struct {
 	Email                string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=1"`
 	EmailVerified        bool      `json:"-"`
 	EmailVerificationKey string    `json:"-"`
+	EmailKeyCreatedAt    time.Time `json:"-"`
 	Password             string    `json:"password" binding:"required" example:"Very!Strong1Pa$$word" extensions:"x-order=2"`
 	Username             string    `json:"login" extensions:"x-order=3"`
 	Name                 string    `json:"name" extensions:"x-order=4"`
@@ -77,8 +80,6 @@ func (u *User) Read(wrk dbWorker) error {
 	switch {
 	case u.UserUUID != uuid.Nil:
 		params["user_uuid"] = u.UserUUID
-	case u.Email != "":
-		params["email"] = u.Email
 	case u.EmailVerificationKey != "":
 		params["email_verification_key"] = u.EmailVerificationKey
 	}
@@ -88,6 +89,20 @@ func (u *User) Read(wrk dbWorker) error {
 		return err
 	}
 	return nil
+}
+
+func (u *User) emailExists(wrk dbWorker) error {
+	params := map[string]any{"email": u.Email}
+
+	err := wrk.ReadOneRecord(u, params)
+	if err != nil {
+		if err.Error() == "404" {
+			return nil
+		}
+		return err
+	}
+
+	return errors.New("given email already exists")
 }
 
 func (u *User) Update(wrk dbWorker) error {

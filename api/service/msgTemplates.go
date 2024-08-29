@@ -91,4 +91,5 @@ const (
 	AlreadyVerified      = "Already verified "
 	VerificationKeySent  = "Verification key sent "
 	VerificationSuccess  = "Verification success "
+	VerificationExpired  = "Verification key expired "
 )

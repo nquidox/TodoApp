@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"time"
 	"todoApp/api/service"
 )
 
@@ -46,8 +47,8 @@ func createUserFunc(s *Service) http.HandlerFunc {
 			return
 		}
 
-		err = usr.Read(s.DbWorker)
-		if err != nil && err.Error() != "404" {
+		err = usr.emailExists(s.DbWorker)
+		if err != nil {
 			service.ConflictResponse(w, service.ConflictErr)
 			log.Error(service.ConflictErr, err)
 			return
@@ -61,6 +62,7 @@ func createUserFunc(s *Service) http.HandlerFunc {
 		}
 
 		usr.EmailVerificationKey = verificationKey
+		usr.EmailKeyCreatedAt = time.Now()
 
 		err = usr.Create(s.DbWorker)
 		if err != nil {
