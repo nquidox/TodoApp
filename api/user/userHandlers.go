@@ -23,7 +23,7 @@ import (
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user [post]
 func createUserFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		usr := User{}
 
 		data, err := io.ReadAll(r.Body)
@@ -85,7 +85,7 @@ func createUserFunc(s *Service) http.HandlerFunc {
 			"username": usr.Username,
 			"email":    usr.Email,
 		}).Info(service.UserCreateSuccess)
-	})
+	}
 }
 
 // readUserFunc     godoc
@@ -104,7 +104,7 @@ func createUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [get]
 func readUserFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		target := targetUUID(w, r, s)
@@ -128,7 +128,7 @@ func readUserFunc(s *Service) http.HandlerFunc {
 			"username": usr.Username,
 			"email":    usr.Email,
 		}).Info(service.UserReadSuccess)
-	})
+	}
 }
 
 // updateUserFunc     godoc
@@ -149,7 +149,7 @@ func readUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [put]
 func updateUserFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		target := targetUUID(w, r, s)
 		usr := updateUser{UserUUID: target}
@@ -192,7 +192,7 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 			"username": usr.Username,
 			"email":    usr.Email,
 		}).Info(service.UserUpdateSuccess)
-	})
+	}
 }
 
 // deleteUserFunc     godoc
@@ -212,7 +212,7 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [delete]
 func deleteUserFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		target := targetUUID(w, r, s)
@@ -239,7 +239,7 @@ func deleteUserFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"id": usr.UserUUID,
 		}).Info(service.UserDeleteSuccess)
-	})
+	}
 
 }
 

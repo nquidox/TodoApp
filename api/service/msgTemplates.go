@@ -85,6 +85,7 @@ const (
 	SessionTokenName = "token"
 
 	/* Email messages */
+	
 	EmailSubject         = "Verify your email address"
 	EmailSendErr         = "Error sending email "
 	EmailVerificationErr = "Email verification error "

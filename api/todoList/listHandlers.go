@@ -23,7 +23,7 @@ import (
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists [post]
 func createListFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -77,7 +77,7 @@ func createListFunc(s *Service) http.HandlerFunc {
 			"id":    todoList.ListUuid,
 			"title": todoList.Title,
 		}).Info(service.TodoListCreateSuccess)
-	})
+	}
 }
 
 // getAllListsFunc godoc
@@ -95,7 +95,7 @@ func createListFunc(s *Service) http.HandlerFunc {
 //	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists [get]
 func getAllListsFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -124,7 +124,7 @@ func getAllListsFunc(s *Service) http.HandlerFunc {
 
 		service.OkResponse(w, lists)
 		log.Info(service.TodoListReadSuccess)
-	})
+	}
 }
 
 // updateListFunc godoc
@@ -143,7 +143,7 @@ func getAllListsFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [put]
 func updateListFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -196,7 +196,7 @@ func updateListFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"id": todoList.ListUuid,
 		}).Info(service.TodoListUpdateSuccess)
-	})
+	}
 }
 
 // deleteListFunc godoc
@@ -214,7 +214,7 @@ func updateListFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [delete]
 func deleteListFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -254,5 +254,5 @@ func deleteListFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"id": todoList.ListUuid,
 		}).Info(service.TodoListDeleteSuccess)
-	})
+	}
 }

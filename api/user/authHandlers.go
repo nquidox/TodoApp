@@ -21,7 +21,7 @@ import (
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/meFunc [get]
 func meFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		token, err := r.Cookie(service.SessionTokenName)
@@ -62,7 +62,7 @@ func meFunc(s *Service) http.HandlerFunc {
 			"id":       me.UserUUID,
 			"username": me.Username,
 		}).Info("/meFunc ", service.UserReadSuccess)
-	})
+	}
 }
 
 // loginFunc     godoc
@@ -79,7 +79,7 @@ func meFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/loginFunc [post]
 func loginFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		data, err := io.ReadAll(r.Body)
@@ -143,7 +143,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 			"id":       getUsr.UserUUID,
 			"username": getUsr.Username,
 		}).Info(service.LoginSuccess)
-	})
+	}
 }
 
 // logoutFunc     godoc
@@ -158,7 +158,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/logoutFunc [get]
 func logoutFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(service.SessionTokenName)
 		if err != nil {
 			service.BadRequestResponse(w, service.CookieReadErr, err)
@@ -177,5 +177,5 @@ func logoutFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"session": cookie.Value,
 		}).Info(service.LogoutSuccess)
-	})
+	}
 }

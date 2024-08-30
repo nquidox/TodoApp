@@ -23,7 +23,7 @@ import (
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks [post]
 func createTaskFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		var aUser authUser
 		err := aUser.isAuth(w, r, s)
@@ -87,7 +87,7 @@ func createTaskFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"Title": task.Title,
 		}).Info(service.TaskCreateSuccess)
-	})
+	}
 }
 
 // getTaskFunc godoc
@@ -106,7 +106,7 @@ func createTaskFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks [get]
 func getTaskFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -153,7 +153,7 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 		service.OkResponse(w, read)
 
 		log.Info(service.TaskReadSuccess)
-	})
+	}
 }
 
 // updateTaskFunc godoc
@@ -172,7 +172,7 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [put]
 func updateTaskFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -235,7 +235,7 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"task id": task.TaskUUID,
 		}).Info(service.TaskUpdateSuccess)
-	})
+	}
 }
 
 // deleteTaskFunc godoc
@@ -253,7 +253,7 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [delete]
 func deleteTaskFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		var aUser authUser
@@ -299,5 +299,5 @@ func deleteTaskFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"id": t.ID,
 		}).Info(service.TaskDeleteSuccess)
-	})
+	}
 }

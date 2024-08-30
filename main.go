@@ -7,46 +7,10 @@ import (
 	"net/http"
 	"path"
 	"runtime"
-	"todoApp/api/todoList"
 	"todoApp/api/user"
 	"todoApp/config"
 	"todoApp/db"
-	"todoApp/types"
 )
-
-type todoApp struct {
-	dbWorker   types.DatabaseWorker
-	authWorker types.AuthWorker
-	salt       []byte
-	server     *ApiServer
-	router     *http.ServeMux
-	config     *config.Config
-}
-
-func (t *todoApp) Init() error {
-	user.Init(&user.Service{
-		DbWorker:   t.dbWorker,
-		AuthWorker: t.authWorker,
-		Salt:       t.salt,
-		Router:     t.router,
-		Config:     t.config,
-	})
-
-	todoList.Init(&todoList.Service{
-		DbWorker:   t.dbWorker,
-		AuthWorker: t.authWorker,
-		Router:     t.router,
-	})
-
-	return nil
-}
-
-func (t *todoApp) Run() error {
-	if err := t.server.Run(t.router); err != nil {
-		log.Fatal(err)
-	}
-	return nil
-}
 
 // @title						TODO App API
 // @version					1.0

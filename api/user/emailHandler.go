@@ -23,7 +23,7 @@ import (
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/verifyEmail/{key} [post]
 func emailFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		key := r.PathValue("key")
 		usr := User{EmailVerificationKey: key}
 
@@ -64,7 +64,7 @@ func emailFunc(s *Service) http.HandlerFunc {
 			Data:       nil,
 		})
 		log.Info(service.VerificationSuccess)
-	})
+	}
 }
 
 // emailResendFunc     godoc
@@ -80,7 +80,7 @@ func emailFunc(s *Service) http.HandlerFunc {
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/reVerifyEmail/{email} [post]
 func emailResendFunc(s *Service) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		email := r.PathValue("email")
 
@@ -137,7 +137,7 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 			Data:       nil,
 		})
 		log.Info(service.VerificationKeySent, " on email resend")
-	})
+	}
 }
 
 func sendVerificationEmail(email string, verificationKey string, s *Service) error {

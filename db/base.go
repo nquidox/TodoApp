@@ -34,7 +34,7 @@ func Connect(c *config.Config) *gorm.DB {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		c.Config.Host, c.Config.Port, c.Config.User, c.Config.Password, c.Config.Dbname, c.Config.Sslmode)
 
-	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger:                 logger.Default.LogMode(level),
 		SkipDefaultTransaction: true,
 	})
@@ -58,5 +58,5 @@ func Connect(c *config.Config) *gorm.DB {
 	}
 	log.Debug("Database log level set to: ", slvl)
 
-	return DB
+	return db
 }
