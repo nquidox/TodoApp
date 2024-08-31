@@ -56,6 +56,15 @@ func UnauthorizedResponse(w http.ResponseWriter, msg any) {
 	})
 }
 
+func ForbiddenResponse(w http.ResponseWriter, msg any) {
+	serverResponse(w, errorResponse{
+		ResultCode: 1,
+		HttpCode:   http.StatusForbidden,
+		Messages:   "Forbidden",
+		Data:       msg,
+	})
+}
+
 func NotFoundResponse(w http.ResponseWriter, msg any) {
 	serverResponse(w, errorResponse{
 		ResultCode: 1,
