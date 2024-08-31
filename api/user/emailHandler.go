@@ -101,7 +101,7 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 			service.OkResponse(w, service.DefaultResponse{
 				ResultCode: 0,
 				HttpCode:   http.StatusNoContent,
-				Messages:   service.AlreadyVerified,
+				Messages:   service.EmailAlreadyVerified,
 				Data:       nil,
 			})
 		}
@@ -146,7 +146,7 @@ func sendVerificationEmail(email string, verificationKey string, s *Service) err
 	m.SetHeader("From", s.Config.Config.EmailReply)
 	m.SetHeader("To", email)
 	m.SetHeader("Subject", service.EmailSubject)
-	body := fmt.Sprintf("<html>Please verify your e-mail by following this link <a href='http://localhost:9000/%[1]s'>%[1]s</a></html>", verificationKey)
+	body := fmt.Sprintf("<html>Please verify your e-mail by following this link <a href='http://localhost:9000/api/v1/verifyEmail/%[1]s'>Verify</a> Key to copypaste: %[1]s</html>", verificationKey)
 	m.SetBody("text/html", body)
 
 	d := gomail.NewDialer(

@@ -62,35 +62,36 @@ const (
 
 	/* OK Messages */
 
-	LoginSuccess  = "Login success "
-	LogoutSuccess = "Logout success "
+	LoginSuccess  = "Login success"
+	LogoutSuccess = "Logout success"
 
-	UserCreateSuccess = "User created successfully "
-	UserReadSuccess   = "User read successfully "
-	UserUpdateSuccess = "User updated successfully "
-	UserDeleteSuccess = "User deleted successfully "
+	UserCreateSuccess = "User created successfully"
+	UserReadSuccess   = "User read successfully"
+	UserUpdateSuccess = "User updated successfully"
+	UserDeleteSuccess = "User deleted successfully"
 
-	TodoListCreateSuccess = "Todo list created successfully "
-	TodoListReadSuccess   = "Todo list read successfully "
-	TodoListUpdateSuccess = "Todo list updated successfully "
-	TodoListDeleteSuccess = "Todo list deleted successfully "
+	TodoListCreateSuccess = "Todo list created successfully"
+	TodoListReadSuccess   = "Todo list read successfully"
+	TodoListUpdateSuccess = "Todo list updated successfully"
+	TodoListDeleteSuccess = "Todo list deleted successfully"
 
-	TaskCreateSuccess = "Task created successfully "
-	TaskReadSuccess   = "Task read successfully "
-	TaskUpdateSuccess = "Task updated successfully "
-	TaskDeleteSuccess = "Task deleted successfully "
+	TaskCreateSuccess = "Task created successfully"
+	TaskReadSuccess   = "Task read successfully"
+	TaskUpdateSuccess = "Task updated successfully"
+	TaskDeleteSuccess = "Task deleted successfully"
 
 	/* Service messages */
 
 	SessionTokenName = "token"
 
 	/* Email messages */
-	
+
 	EmailSubject         = "Verify your email address"
 	EmailSendErr         = "Error sending email "
 	EmailVerificationErr = "Email verification error "
-	AlreadyVerified      = "Already verified "
-	VerificationKeySent  = "Verification key sent "
-	VerificationSuccess  = "Verification success "
-	VerificationExpired  = "Verification key expired "
+	EmailAlreadyVerified = "Already verified"
+	EmailNotVerified     = "Email not verified"
+	VerificationKeySent  = "Verification key sent"
+	VerificationSuccess  = "Verification success"
+	VerificationExpired  = "Verification key expired"
 )
