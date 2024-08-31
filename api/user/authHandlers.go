@@ -10,15 +10,15 @@ import (
 
 // meFunc     godoc
 //
+//	@Security		BasicAuth
 //	@Summary		me request
 //	@Description	me request
-//	@Security		BasicAuth
 //	@Tags			Auth
 //	@Produce		json
-//	@Success		200	{object}	meResponse
+//	@Success		200	{object}	meResponse				"OK"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
-//	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/me [get]
 func meFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +26,7 @@ func meFunc(s *Service) http.HandlerFunc {
 
 		token, err := r.Cookie(service.SessionTokenName)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
 			service.UnauthorizedResponse(w, "")
 			log.Error(service.TokenReadErr, err)
 			return
@@ -34,6 +35,7 @@ func meFunc(s *Service) http.HandlerFunc {
 		session := Session{Token: token.Value}
 		err = session.Read(s.DbWorker)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
 			service.UnauthorizedResponse(w, "")
 			log.Error(service.TokenValidationErr, err)
 			return
@@ -42,11 +44,13 @@ func meFunc(s *Service) http.HandlerFunc {
 		me := meModel{UserUUID: session.UserUuid}
 		err = me.Read(s.DbWorker)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.UserReadErr, err)
 			log.Error(service.UserReadErr, err)
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		service.OkResponse(w, meResponse{
 			ResultCode: 0,
 			HttpCode:   200,
@@ -72,10 +76,10 @@ func meFunc(s *Service) http.HandlerFunc {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			user	body		loginUserModel	true	"loginFunc"
-//	@Success		200		{object}	service.errorResponse
+//	@Param			user	body		loginUserModel			true	"login"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
-//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/login [post]
 func loginFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +87,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.JSONReadErr, err)
 			log.Error(service.JSONReadErr, err)
 			return
@@ -91,6 +96,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 		usr := loginUserModel{}
 		err = service.DeserializeJSON(data, &usr)
 		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			log.Error(service.JSONDeserializingErr, err)
 			return
@@ -98,6 +104,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 
 		err = usr.CheckRequiredFields()
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.ValidationErr, err)
 			log.Error(service.ValidationErr, err)
 			return
@@ -106,12 +113,14 @@ func loginFunc(s *Service) http.HandlerFunc {
 		getUsr := User{Email: usr.Email}
 		err = getUsr.Read(s.DbWorker)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.EmailErr, err)
 			log.Error(service.EmailErr, err)
 			return
 		}
 
 		if !getUsr.EmailVerified {
+			w.WriteHeader(http.StatusForbidden)
 			service.ForbiddenResponse(w, service.EmailNotVerified)
 			log.Error(service.EmailNotVerified, err)
 			return
@@ -119,6 +128,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 
 		err = comparePasswords(getUsr.Password, usr.Password)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.PasswordErr, err)
 			log.Error(service.PasswordErr, err)
 			return
@@ -127,6 +137,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 		var session Session
 		cookie, err := session.Create(s.DbWorker, getUsr.UserUUID, s.Salt)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 			log.Error(service.SessionCreateErr, err)
 			return
@@ -137,6 +148,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 		}
 
 		http.SetCookie(w, &cookie)
+		w.WriteHeader(http.StatusOK)
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
 			HttpCode:   http.StatusOK,
@@ -153,19 +165,20 @@ func loginFunc(s *Service) http.HandlerFunc {
 
 // logoutFunc     godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Log out
 //	@Description	Log out and invalidate access token
 //	@Tags			Auth
-//	@Security		ApiKeyAuth
-//	@Success		200
+//	@Success		204
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
-//	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/logout [get]
 func logoutFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(service.SessionTokenName)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.CookieReadErr, err)
 			log.Error(service.CookieReadErr, err)
 			return
@@ -174,11 +187,13 @@ func logoutFunc(s *Service) http.HandlerFunc {
 		session := Session{Token: cookie.Value}
 		err = session.Delete(s.DbWorker)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
 			service.UnauthorizedResponse(w, service.InvalidTokenErr)
 			log.Error(service.InvalidTokenErr)
 			return
 		}
 
+		w.WriteHeader(http.StatusNoContent)
 		log.WithFields(log.Fields{
 			"session": cookie.Value,
 		}).Info(service.LogoutSuccess)

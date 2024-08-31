@@ -16,11 +16,12 @@ import (
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			user	body		User	true	"Create new user"
-//	@Success		200		{object}	User
+//	@Param			user	body		User					true	"Create new user"
+//	@Success		200		{object}	User					"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		409		{object}	service.errorResponse	"Conflict"
-//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
+//	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/user [post]
 func createUserFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -28,36 +29,41 @@ func createUserFunc(s *Service) http.HandlerFunc {
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			service.BadRequestResponse(w, service.BodyReadErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.BodyReadErr, err)
+			service.BadRequestResponse(w, service.BodyReadErr, err)
 			return
 		}
 
 		err = service.DeserializeJSON(data, &usr)
 		if err != nil {
-			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Error(service.JSONDeserializingErr, err)
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
 
 		err = usr.CheckRequiredFields()
 		if err != nil {
-			service.BadRequestResponse(w, service.ValidationErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ValidationErr, err)
+			service.BadRequestResponse(w, service.ValidationErr, err)
 			return
 		}
 
 		err = usr.emailExists(s.DbWorker)
 		if err != nil {
-			service.ConflictResponse(w, service.ConflictErr)
+			w.WriteHeader(http.StatusConflict)
 			log.Error(service.ConflictErr, err)
+			service.ConflictResponse(w, service.ConflictErr)
 			return
 		}
 
 		verificationKey, err := generateEmailVerificationKey()
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.VerificationKeyErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.VerificationKeyErr, err)
+			service.InternalServerErrorResponse(w, service.VerificationKeyErr, err)
 			return
 		}
 
@@ -66,34 +72,37 @@ func createUserFunc(s *Service) http.HandlerFunc {
 
 		err = usr.Create(s.DbWorker)
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.UserCreateErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.UserCreateErr, err)
+			service.InternalServerErrorResponse(w, service.UserCreateErr, err)
 			return
 		}
 
 		err = sendVerificationEmail(usr.Email, verificationKey, s)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.EmailSendErr, err)
+			service.InternalServerErrorResponse(w, service.EmailSendErr, err)
 			return
 		}
 		log.Debug("Verification link sent on create user")
 
-		service.OkResponse(w, usr)
-
+		w.WriteHeader(http.StatusOK)
 		log.WithFields(log.Fields{
 			"id":       usr.UserUUID,
 			"username": usr.Username,
 			"email":    usr.Email,
 		}).Info(service.UserCreateSuccess)
+		service.OkResponse(w, usr)
 	}
 }
 
 // readUserFunc     godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Get user
 //	@Description	Returns user info. UUID is optional for superusers.
 //	@Tags			User
-//	@Security		BasicAuth
 //	@Produce		json
 //	@Param			id	path		string					false	"uuid"
 //	@Success		200	{object}	User					"OK"
@@ -113,40 +122,44 @@ func readUserFunc(s *Service) http.HandlerFunc {
 		err := usr.Read(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
-			log.Error(service.UserReadErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			service.InternalServerErrorResponse(w, service.UserReadErr, err)
+			log.Error(service.UserReadErr, err)
 			return
 		}
 
-		service.OkResponse(w, usr)
+		w.WriteHeader(http.StatusOK)
 		log.WithFields(log.Fields{
 			"id":       usr.UserUUID,
 			"username": usr.Username,
 			"email":    usr.Email,
 		}).Info(service.UserReadSuccess)
+		service.OkResponse(w, usr)
 	}
 }
 
 // updateUserFunc     godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Update user
 //	@Description	Updates your account data. UUID is optional for superusers.
 //	@Tags			User
-//	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string					false	"uuid"
 //	@Param			user	body		updateUser				true	"Update user"
-//	@Success		200		{object}	service.errorResponse	"OK"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		409		{object}	service.errorResponse	"Conflict"
-//	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
+//	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/user/{id} [put]
 func updateUserFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -156,29 +169,40 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			service.BadRequestResponse(w, service.BodyReadErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.BodyReadErr, err)
+			service.BadRequestResponse(w, service.BodyReadErr, err)
 			return
 		}
 
 		err = service.DeserializeJSON(data, &usr)
 		if err != nil {
-			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Error(service.JSONDeserializingErr, err)
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
 
 		err = usr.Update(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
-			service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.UserUpdateErr, err)
+			service.InternalServerErrorResponse(w, service.UserUpdateErr, err)
 			return
 		}
+
+		w.WriteHeader(http.StatusOK)
+		log.WithFields(log.Fields{
+			"id":       usr.UserUUID,
+			"username": usr.Username,
+			"email":    usr.Email,
+		}).Info(service.UserUpdateSuccess)
 
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
@@ -186,25 +210,19 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 			Messages:   service.UserUpdateSuccess,
 			Data:       nil,
 		})
-
-		log.WithFields(log.Fields{
-			"id":       usr.UserUUID,
-			"username": usr.Username,
-			"email":    usr.Email,
-		}).Info(service.UserUpdateSuccess)
 	}
 }
 
 // deleteUserFunc     godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Delete user
 //	@Description	Deletes user account. UUID is optional for superusers.
 //	@Tags			User
-//	@Security		BasicAuth
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string					false	"uuid"
-//	@Success		204	{object}	service.DefaultResponse	"No Content"
+//	@Success		200	{object}	service.DefaultResponse	"OK"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
@@ -221,13 +239,21 @@ func deleteUserFunc(s *Service) http.HandlerFunc {
 		err := usr.Delete(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
+				w.WriteHeader(http.StatusNotFound)
 				service.NotFoundResponse(w, "")
 				log.Error(service.DBNotFound)
 				return
 			}
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Error(service.UserDeleteErr, err)
 			service.InternalServerErrorResponse(w, service.UserDeleteErr, err)
 			return
 		}
+
+		w.WriteHeader(http.StatusOK)
+		log.WithFields(log.Fields{
+			"id": usr.UserUUID,
+		}).Info(service.UserDeleteSuccess)
 
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
@@ -235,17 +261,13 @@ func deleteUserFunc(s *Service) http.HandlerFunc {
 			Messages:   service.UserDeleteSuccess,
 			Data:       nil,
 		})
-
-		log.WithFields(log.Fields{
-			"id": usr.UserUUID,
-		}).Info(service.UserDeleteSuccess)
 	}
-
 }
 
 func targetUUID(w http.ResponseWriter, r *http.Request, s *Service) uuid.UUID {
 	token, err := r.Cookie(service.SessionTokenName)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		log.Error(service.TokenReadErr, err.Error())
 		service.BadRequestResponse(w, service.CookieReadErr, err)
 		return uuid.Nil
@@ -254,6 +276,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request, s *Service) uuid.UUID {
 	session := Session{Token: token.Value}
 	err = session.Read(s.DbWorker)
 	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
 		log.Error(service.TokenValidationErr, err)
 		service.UnauthorizedResponse(w, "")
 		return uuid.Nil
@@ -272,6 +295,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request, s *Service) uuid.UUID {
 	usr := User{UserUUID: session.UserUuid}
 	err = usr.Read(s.DbWorker)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Error(service.UserReadErr, err.Error())
 		service.InternalServerErrorResponse(w, service.UserReadErr, err)
 		return uuid.Nil

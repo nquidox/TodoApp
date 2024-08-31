@@ -17,9 +17,10 @@ import (
 //	@Tags			Email
 //	@Produce		json
 //	@Param			key	path		string					true	"key"
-//	@Success		204	{object}	service.DefaultResponse	"No Content"
+//	@Success		200	{object}	service.DefaultResponse	"OK"
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
+//	@Failure		410	{object}	service.errorResponse	"Gone"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/verifyEmail/{key} [post]
 func emailFunc(s *Service) http.HandlerFunc {
@@ -30,10 +31,12 @@ func emailFunc(s *Service) http.HandlerFunc {
 		err := usr.Read(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.UserReadErr, err)
 			service.InternalServerErrorResponse(w, service.UserReadErr, err)
 			return
@@ -42,12 +45,19 @@ func emailFunc(s *Service) http.HandlerFunc {
 		usr.EmailVerified = true
 		err = usr.Update(s.DbWorker)
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.EmailVerificationErr, err)
+			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
 			return
 		}
 
 		if time.Since(usr.EmailKeyCreatedAt) >= 24*time.Hour {
+			w.WriteHeader(http.StatusGone)
+			log.WithFields(log.Fields{
+				"email":        usr.Email,
+				"keyCreatedAt": usr.EmailKeyCreatedAt,
+			}).Info(service.VerificationExpired)
+
 			service.OkResponse(w, service.DefaultResponse{
 				ResultCode: 1,
 				HttpCode:   http.StatusGone,
@@ -57,13 +67,14 @@ func emailFunc(s *Service) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
+		log.Info(service.VerificationSuccess)
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
-			HttpCode:   http.StatusNoContent,
+			HttpCode:   http.StatusOK,
 			Messages:   service.VerificationSuccess,
 			Data:       nil,
 		})
-		log.Info(service.VerificationSuccess)
 	}
 }
 
@@ -74,7 +85,7 @@ func emailFunc(s *Service) http.HandlerFunc {
 //	@Tags			Email
 //	@Produce		json
 //	@Param			email	path		string					true	"key"
-//	@Success		204		{object}	service.DefaultResponse	"No Content"
+//	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
@@ -88,19 +99,26 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 		err = usr.Read(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.UserReadErr, err)
 			service.InternalServerErrorResponse(w, service.UserReadErr, err)
 			return
 		}
 
 		if usr.EmailVerified {
+			w.WriteHeader(http.StatusOK)
+			log.WithFields(log.Fields{
+				"email": usr.Email,
+			}).Info(service.EmailAlreadyVerified)
+
 			service.OkResponse(w, service.DefaultResponse{
 				ResultCode: 0,
-				HttpCode:   http.StatusNoContent,
+				HttpCode:   http.StatusOK,
 				Messages:   service.EmailAlreadyVerified,
 				Data:       nil,
 			})
@@ -108,8 +126,9 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 
 		newKey, err := generateEmailVerificationKey()
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.VerificationKeyErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.VerificationKeyErr, err)
+			service.InternalServerErrorResponse(w, service.VerificationKeyErr, err)
 			return
 		}
 
@@ -118,25 +137,29 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 
 		err = usr.Update(s.DbWorker)
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.EmailVerificationErr, err)
+			service.InternalServerErrorResponse(w, service.EmailVerificationErr, err)
 			return
 		}
 
 		err = sendVerificationEmail(usr.Email, newKey, s)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.EmailSendErr, err)
+			service.InternalServerErrorResponse(w, service.EmailSendErr, err)
 			return
 		}
 		log.Debug("Verification link sent on email resend")
 
+		w.WriteHeader(http.StatusOK)
+		log.Info(service.VerificationKeySent, " on email resend")
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
-			HttpCode:   http.StatusNoContent,
+			HttpCode:   http.StatusOK,
 			Messages:   service.VerificationKeySent,
 			Data:       nil,
 		})
-		log.Info(service.VerificationKeySent, " on email resend")
 	}
 }
 

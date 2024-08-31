@@ -10,6 +10,7 @@ import (
 
 // createTaskFunc godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Create task list
 //	@Description	Creates new task. Time format example: "02-01-2006 15:04:05"
 //	@Tags			Tasks
@@ -20,28 +21,35 @@ import (
 //	@Success		200		{object}	createTask				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks [post]
 func createTaskFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
 		var aUser authUser
 		err := aUser.isAuth(w, r, s)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.Unauthorized, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
 		id, err := uuid.Parse(r.PathValue("listId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			service.BadRequestResponse(w, service.BodyReadErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.BodyReadErr, err)
+			service.BadRequestResponse(w, service.BodyReadErr, err)
 			return
 		}
 
@@ -49,15 +57,17 @@ func createTaskFunc(s *Service) http.HandlerFunc {
 
 		err = service.DeserializeJSON(data, &task)
 		if err != nil {
-			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Error(service.JSONDeserializingErr, err)
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
 
 		err = task.validateTitle()
 		if err != nil {
-			service.BadRequestResponse(w, service.ValidationErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ValidationErr, err)
+			service.BadRequestResponse(w, service.ValidationErr, err)
 			return
 		}
 
@@ -77,21 +87,24 @@ func createTaskFunc(s *Service) http.HandlerFunc {
 
 		err = newTask.Create(s.DbWorker)
 		if err != nil {
-			service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.TaskCreateErr, err)
+			service.InternalServerErrorResponse(w, service.TaskCreateErr, err)
 			return
 		}
 
-		service.OkResponse(w, task)
-
+		w.WriteHeader(http.StatusOK)
 		log.WithFields(log.Fields{
 			"Title": task.Title,
 		}).Info(service.TaskCreateSuccess)
+
+		service.OkResponse(w, task)
 	}
 }
 
 // getTaskFunc godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Get tasks
 //	@Description	Requests all tasks with query parameters. Count and page params are optional. Defaults: count=10, page=1
 //	@Tags			Tasks
@@ -112,6 +125,9 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 		var aUser authUser
 		err := aUser.isAuth(w, r, s)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.Unauthorized, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
@@ -121,8 +137,9 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 
 		id, err := uuid.Parse(r.PathValue("listId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
@@ -135,29 +152,27 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 
 		read, err := tasks.Read(s.DbWorker, count, page)
 		if err != nil {
-			//if no records found, return success 204 no content instead of 404
 			if err.Error() == "404" {
-				service.OkResponse(w, service.DefaultResponse{
-					ResultCode: 0,
-					HttpCode:   http.StatusNoContent,
-					Messages:   "",
-					Data:       nil,
-				})
+				w.WriteHeader(http.StatusNoContent)
+				log.Info(service.NoContent)
 				return
 			}
-			service.InternalServerErrorResponse(w, service.TaskReadErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.TaskReadErr, err)
+			service.InternalServerErrorResponse(w, service.TaskReadErr, err)
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
+		log.Info(service.TaskReadSuccess)
 		service.OkResponse(w, read)
 
-		log.Info(service.TaskReadSuccess)
 	}
 }
 
 // updateTaskFunc godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Update task
 //	@Description	Updates task
 //	@Tags			Tasks
@@ -169,6 +184,7 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
+//	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [put]
 func updateTaskFunc(s *Service) http.HandlerFunc {
@@ -178,27 +194,33 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 		var aUser authUser
 		err := aUser.isAuth(w, r, s)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.Unauthorized, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
 		listId, err := uuid.Parse(r.PathValue("listId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
 		taskId, err := uuid.Parse(r.PathValue("taskId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			service.BadRequestResponse(w, service.BodyReadErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.BodyReadErr, err)
+			service.BadRequestResponse(w, service.BodyReadErr, err)
 			return
 		}
 
@@ -206,40 +228,45 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 
 		err = service.DeserializeJSON(data, &task)
 		if err != nil {
-			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Error(service.JSONDeserializingErr, err)
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
 
 		err = task.validateTitle()
 		if err != nil {
-			service.BadRequestResponse(w, service.ValidationErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ValidationErr, err)
+			service.BadRequestResponse(w, service.ValidationErr, err)
 			return
 		}
 
 		err = task.Update(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
-			service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.TaskUpdateErr, err)
+			service.InternalServerErrorResponse(w, service.TaskUpdateErr, err)
 			return
 		}
 
-		service.OkResponse(w, task)
-
+		w.WriteHeader(http.StatusOK)
 		log.WithFields(log.Fields{
 			"task id": task.TaskUUID,
 		}).Info(service.TaskUpdateSuccess)
+		service.OkResponse(w, task)
 	}
 }
 
 // deleteTaskFunc godoc
 //
+//	@Security		BasicAuth
 //	@Summary		Delete task
 //	@Description	Deletes task
 //	@Tags			Tasks
@@ -259,20 +286,25 @@ func deleteTaskFunc(s *Service) http.HandlerFunc {
 		var aUser authUser
 		err := aUser.isAuth(w, r, s)
 		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.Unauthorized, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
 		listId, err := uuid.Parse(r.PathValue("listId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
 		taskId, err := uuid.Parse(r.PathValue("taskId"))
 		if err != nil {
-			service.BadRequestResponse(w, service.ParseErr, err)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error(service.ParseErr, err)
+			service.BadRequestResponse(w, service.ParseErr, err)
 			return
 		}
 
@@ -280,24 +312,27 @@ func deleteTaskFunc(s *Service) http.HandlerFunc {
 		err = t.Delete(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
-				service.NotFoundResponse(w, "")
+				w.WriteHeader(http.StatusNotFound)
 				log.Error(service.DBNotFound)
+				service.NotFoundResponse(w, "")
 				return
 			}
-			service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error(service.TaskDeleteErr, err)
+			service.InternalServerErrorResponse(w, service.TaskDeleteErr, err)
 			return
 		}
 
-		service.OkResponse(w, service.DefaultResponse{
-			ResultCode: 0,
-			HttpCode:   http.StatusNoContent,
-			Messages:   "",
-			Data:       "",
-		})
-
+		w.WriteHeader(http.StatusOK)
 		log.WithFields(log.Fields{
 			"id": t.ID,
 		}).Info(service.TaskDeleteSuccess)
+
+		service.OkResponse(w, service.DefaultResponse{
+			ResultCode: 0,
+			HttpCode:   http.StatusOK,
+			Messages:   "",
+			Data:       "",
+		})
 	}
 }

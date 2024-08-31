@@ -8,6 +8,8 @@ const (
 	BodyReadErr       = "Body read error"
 	ServerResponseErr = "Server response error "
 	WriteBytesErr     = "Error sending data "
+	Unauthorized      = "Unauthorized"
+	NoContent         = "No content"
 
 	/* User Errors */
 
