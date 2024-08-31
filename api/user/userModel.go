@@ -77,10 +77,13 @@ func (u *User) Create(wrk dbWorker) error {
 func (u *User) Read(wrk dbWorker) error {
 	params := make(map[string]any)
 
-	switch {
-	case u.UserUUID != uuid.Nil:
+	if u.UserUUID != uuid.Nil {
 		params["user_uuid"] = u.UserUUID
-	case u.EmailVerificationKey != "":
+	}
+	if u.Email != "" {
+		params["email"] = u.Email
+	}
+	if u.EmailVerificationKey != "" {
 		params["email_verification_key"] = u.EmailVerificationKey
 	}
 

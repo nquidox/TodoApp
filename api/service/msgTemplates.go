@@ -90,6 +90,7 @@ const (
 
 	EmailSubject         = "Verify your email address"
 	EmailSendErr         = "Error sending email "
+	EmailNotFoundErr     = "Email not found"
 	EmailVerificationErr = "Email verification error "
 	EmailAlreadyVerified = "Already verified"
 	EmailNotVerified     = "Email not verified"

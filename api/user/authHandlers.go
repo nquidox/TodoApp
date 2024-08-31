@@ -79,6 +79,7 @@ func meFunc(s *Service) http.HandlerFunc {
 //	@Param			user	body		loginUserModel			true	"login"
 //	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		404		{object}	service.errorResponse	"Not found"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/login [post]
 func loginFunc(s *Service) http.HandlerFunc {
@@ -113,6 +114,12 @@ func loginFunc(s *Service) http.HandlerFunc {
 		getUsr := User{Email: usr.Email}
 		err = getUsr.Read(s.DbWorker)
 		if err != nil {
+			if err.Error() == "404" {
+				w.WriteHeader(http.StatusNotFound)
+				log.Debug(service.EmailNotFoundErr)
+				service.NotFoundResponse(w, service.EmailNotFoundErr)
+				return
+			}
 			w.WriteHeader(http.StatusBadRequest)
 			service.BadRequestResponse(w, service.EmailErr, err)
 			log.Error(service.EmailErr, err)

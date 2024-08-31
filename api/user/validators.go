@@ -6,23 +6,28 @@ import (
 )
 
 func (u *User) CheckRequiredFields() error {
-	_, err := mail.ParseAddress(u.Email)
+	err := validateRequiredFields(u.Email, u.Password)
 	if err != nil {
 		return err
-	}
-
-	if u.Password == "" {
-		return errors.New("password is required")
 	}
 	return nil
 }
 
 func (l *loginUserModel) CheckRequiredFields() error {
-	if l.Email == "" {
-		return errors.New("email is required")
+	err := validateRequiredFields(l.Email, l.Password)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateRequiredFields(email, password string) error {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return err
 	}
 
-	if l.Password == "" {
+	if password == "" {
 		return errors.New("password is required")
 	}
 	return nil
