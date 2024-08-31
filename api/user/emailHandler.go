@@ -22,9 +22,11 @@ import (
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
 //	@Failure		410	{object}	service.errorResponse	"Gone"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
-//	@Router			/verifyEmail/{key} [post]
+//	@Router			/verifyEmail/{key} [get]
 func emailFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		key := r.PathValue("key")
 		usr := User{EmailVerificationKey: key}
 
@@ -92,6 +94,8 @@ func emailFunc(s *Service) http.HandlerFunc {
 //	@Router			/reVerifyEmail/{email} [post]
 func emailResendFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		var err error
 		email := r.PathValue("email")
 

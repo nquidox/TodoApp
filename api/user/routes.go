@@ -23,7 +23,7 @@ func addRoutes(s *Service) {
 	s.Router.HandleFunc("GET /api/v1/me", meHandler)
 
 	emailHandler := emailFunc(s)
-	s.Router.HandleFunc("POST /api/v1/verifyEmail/{key}", emailHandler)
+	s.Router.HandleFunc("GET /api/v1/verifyEmail/{key}", emailHandler)
 
 	emailResendHandler := emailResendFunc(s)
 	s.Router.HandleFunc("POST /api/v1/reVerifyEmail/{email}", emailResendHandler)
