@@ -10,8 +10,8 @@ import (
 
 // meFunc     godoc
 //
-//	@Summary		meFunc request
-//	@Description	meFunc request
+//	@Summary		me request
+//	@Description	me request
 //	@Security		BasicAuth
 //	@Tags			Auth
 //	@Produce		json
@@ -19,7 +19,7 @@ import (
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
-//	@Router			/meFunc [get]
+//	@Router			/me [get]
 func meFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -61,23 +61,22 @@ func meFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"id":       me.UserUUID,
 			"username": me.Username,
-		}).Info("/meFunc ", service.UserReadSuccess)
+		}).Info("/me ", service.UserReadSuccess)
 	}
 }
 
 // loginFunc     godoc
 //
 //	@Summary		Log in
-//	@Description	Success loginFunc gives you a cookie with access token
+//	@Description	Success login gives you a cookie with access token
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Param			user	body		loginUserModel	true	"loginFunc"
 //	@Success		200		{object}	service.errorResponse
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
-//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
-//	@Router			/loginFunc [post]
+//	@Router			/login [post]
 func loginFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -109,6 +108,12 @@ func loginFunc(s *Service) http.HandlerFunc {
 		if err != nil {
 			service.BadRequestResponse(w, service.EmailErr, err)
 			log.Error(service.EmailErr, err)
+			return
+		}
+
+		if !getUsr.EmailVerified {
+			service.ForbiddenResponse(w, service.EmailNotVerified)
+			log.Error(service.EmailNotVerified, err)
 			return
 		}
 
@@ -156,7 +161,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
-//	@Router			/logoutFunc [get]
+//	@Router			/logout [get]
 func logoutFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(service.SessionTokenName)
