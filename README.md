@@ -37,6 +37,12 @@ HTTP_PORT=9000
 # Logger levels
 APP_LOG_LEVEL=info
 DB_LOG_LEVEL=silent
+
+# Email
+EMAIL_LOGIN = login
+EMAIL_PASS = pass
+EMAIL_REPLY = reply@emailservice.box
+EMAIL_SERVICE = email.server.name
 ```
 
 5. Build and run
