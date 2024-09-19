@@ -119,7 +119,7 @@ func (u *User) Update(wrk dbWorker) error {
 
 func (u *updateUser) Update(wrk dbWorker) error {
 	params := map[string]any{"user_uuid": u.UserUUID}
-	err := wrk.UpdateRecord(u, params)
+	err := wrk.UpdateRecordSubmodel(User{}, u, params)
 	if err != nil {
 		return err
 	}
