@@ -180,7 +180,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		500	{object}	service.errorResponse	"Internal server error"
-//	@Router			/logout [get]
+//	@Router			/logout [post]
 func logoutFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(service.SessionTokenName)

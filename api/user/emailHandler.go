@@ -22,7 +22,7 @@ import (
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
 //	@Failure		410	{object}	service.errorResponse	"Gone"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
-//	@Router			/verifyEmail/{key} [get]
+//	@Router			/verifyEmail/{key} [post]
 func emailFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

@@ -17,13 +17,13 @@ func addRoutes(s *Service) {
 	s.Router.HandleFunc("POST /api/v1/login", loginHandler)
 
 	logoutHandler := logoutFunc(s)
-	s.Router.HandleFunc("GET /api/v1/logout", logoutHandler)
+	s.Router.HandleFunc("POST /api/v1/logout", logoutHandler)
 
 	meHandler := meFunc(s)
 	s.Router.HandleFunc("GET /api/v1/me", meHandler)
 
 	emailHandler := emailFunc(s)
-	s.Router.HandleFunc("GET /api/v1/verifyEmail/{key}", emailHandler)
+	s.Router.HandleFunc("POST /api/v1/verifyEmail/{key}", emailHandler)
 
 	emailResendHandler := emailResendFunc(s)
 	s.Router.HandleFunc("POST /api/v1/reVerifyEmail/{email}", emailResendHandler)
