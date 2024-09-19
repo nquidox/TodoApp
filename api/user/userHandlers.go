@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 	"todoApp/api/service"
 )
@@ -42,6 +43,8 @@ func createUserFunc(s *Service) http.HandlerFunc {
 			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
+
+		usr.Email = strings.ToLower(usr.Email)
 
 		err = usr.CheckRequiredFields()
 		if err != nil {
@@ -183,11 +186,17 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 			return
 		}
 
+		usr.Email = strings.ToLower(usr.Email)
+
 		err = usr.Update(s.DbWorker)
 		if err != nil {
 			if err.Error() == "404" {
 				w.WriteHeader(http.StatusNotFound)
-				log.Error(service.DBNotFound)
+				log.WithFields(log.Fields{
+					"id":       usr.UserUUID,
+					"username": usr.Username,
+					"email":    usr.Email,
+				}).Error(service.DBNotFound)
 				service.NotFoundResponse(w, "")
 				return
 			}
@@ -288,7 +297,7 @@ func targetUUID(w http.ResponseWriter, r *http.Request, s *Service) uuid.UUID {
 	if id != "" {
 		parsedUUID, err = uuid.Parse(id)
 		if err != nil {
-			log.Warning(service.UUIDParseErr, err, "ignoring")
+			log.Warning(service.UUIDParseErr, err, ", ignoring")
 		}
 	}
 
