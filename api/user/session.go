@@ -71,12 +71,14 @@ func (s *Session) Delete(wrk dbWorker) error {
 
 func createSessionCookie(token string, expires time.Time) (http.Cookie, error) {
 	cookie := http.Cookie{
-		Name:     service.SessionTokenName,
-		Value:    token,
-		Path:     "/",
-		Expires:  expires,
-		Secure:   false,
-		HttpOnly: true,
+		Name:        service.SessionTokenName,
+		Value:       token,
+		Path:        "/",
+		Expires:     expires,
+		Secure:      true,
+		HttpOnly:    false,
+		SameSite:    http.SameSiteNoneMode,
+		Partitioned: true,
 	}
 	log.WithFields(log.Fields{
 		"name":  service.SessionTokenName,
