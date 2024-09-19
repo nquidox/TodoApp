@@ -43,6 +43,9 @@ EMAIL_LOGIN = login
 EMAIL_PASS = pass
 EMAIL_REPLY = reply@emailservice.box
 EMAIL_SERVICE = email.server.name
+
+# Origins
+ALLOWED_ORIGINS = "http://localhost, http://localhost:9090"
 ```
 
 5. Build and run
