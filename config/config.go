@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type EnvFileConfig struct {
 	Host         string
@@ -17,6 +20,10 @@ type EnvFileConfig struct {
 	EmailLogin   string
 	EmailPass    string
 	EmailReply   string
+}
+
+type CORSConfig struct {
+	AllowedOrigins []string
 }
 
 type Config struct {
@@ -40,6 +47,19 @@ func New() *Config {
 		EmailPass:    getEnv("EMAIL_PASS"),
 		EmailReply:   getEnv("EMAIL_REPLY"),
 	}}
+}
+
+func CorsConfig() *CORSConfig {
+	envOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+	var origins []string
+
+	for _, origin := range envOrigins {
+		origins = append(origins, strings.TrimSpace(origin))
+	}
+
+	return &CORSConfig{
+		AllowedOrigins: origins,
+	}
 }
 
 func getEnv(key string) string {

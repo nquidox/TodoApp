@@ -16,6 +16,7 @@ type todoApp struct {
 	server     *ApiServer
 	router     *http.ServeMux
 	config     *config.Config
+	cors       *config.CORSConfig
 }
 
 func (t *todoApp) Init() error {
@@ -37,7 +38,7 @@ func (t *todoApp) Init() error {
 }
 
 func (t *todoApp) Run() error {
-	if err := t.server.Run(t.router); err != nil {
+	if err := t.server.Run(t.router, t.cors); err != nil {
 		log.Fatal(err)
 	}
 	return nil

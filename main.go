@@ -55,6 +55,7 @@ func main() {
 		server:     NewApiServer(c.Config.HTTPHost, c.Config.HTTPPort),
 		router:     http.NewServeMux(),
 		config:     c,
+		cors:       config.CorsConfig(),
 	}
 
 	err = app.Init()
