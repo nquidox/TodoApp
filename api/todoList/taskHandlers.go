@@ -177,8 +177,6 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 //	@Description	Updates task
 //	@Tags			Tasks
 //	@Produce		json
-//	@Param			listId	path		string					true	"list uuid"
-//	@Param			taskId	path		string					true	"task uuid"
 //	@Param			data	body		createTask				true	"Task data for update"
 //	@Success		200		{object}	createTask				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
@@ -271,8 +269,6 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 //	@Description	Deletes task
 //	@Tags			Tasks
 //	@Produce		json
-//	@Param			listId	path		string					true	"list uuid"
-//	@Param			taskId	path		string					true	"task uuid"
 //	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"

@@ -141,7 +141,6 @@ func getAllListsFunc(s *Service) http.HandlerFunc {
 //	@Description	Updates todo list
 //	@Tags			Todo lists
 //	@Produce		json
-//	@Param			listId	path		string					true	"List uuid"
 //	@Param			data	body		createTodoList			true	"List data for update"
 //	@Success		200		{object}	TodoList				"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
@@ -223,12 +222,11 @@ func updateListFunc(s *Service) http.HandlerFunc {
 //	@Description	Deletes todo list
 //	@Tags			Todo lists
 //	@Produce		json
-//	@Param			listId	path		string					true	"list uuid"
-//	@Success		200		{object}	service.DefaultResponse	"OK"
-//	@Failure		400		{object}	service.errorResponse	"Bad request"
-//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
-//	@Failure		404		{object}	service.errorResponse	"Not Found"
-//	@Failure		500		{object}	service.errorResponse	"Internal server error"
+//	@Success		200	{object}	service.DefaultResponse	"OK"
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404	{object}	service.errorResponse	"Not Found"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId} [delete]
 func deleteListFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
