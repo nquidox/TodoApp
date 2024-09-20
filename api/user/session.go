@@ -12,12 +12,12 @@ import (
 )
 
 type Session struct {
-	gorm.Model
-	Id         int
-	UserUuid   uuid.UUID
-	Token      string
-	ClientInfo string
-	Expires    time.Time
+	gorm.Model `json:"-"`
+	Id         int       `json:"-"`
+	UserUuid   uuid.UUID `json:"-" gorm:"primarykey"`
+	Token      string    `json:"-"`
+	ClientInfo string    `json:"Client Info"`
+	Expires    time.Time `json:"Expires"`
 }
 
 func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte, userAgent string) (http.Cookie, error) {
@@ -55,6 +55,16 @@ func (s *Session) Read(wrk dbWorker) error {
 	return nil
 }
 
+func (s *Session) ReadAll(wrk dbWorker) ([]Session, error) {
+	var allSessions []Session
+	params := map[string]any{"user_uuid": s.UserUuid}
+	err := wrk.ReadManyRecords(Session{}, &allSessions, params)
+	if err != nil {
+		return nil, err
+	}
+	return allSessions, nil
+}
+
 func (s *Session) Delete(wrk dbWorker) error {
 	params := map[string]any{service.SessionTokenName: s.Token}
 	err := wrk.ReadOneRecord(s, params)
@@ -63,6 +73,15 @@ func (s *Session) Delete(wrk dbWorker) error {
 	}
 
 	err = wrk.DeleteRecord(s, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Session) DeleteAllExceptOne(wrk dbWorker, except string) error {
+	params := map[string]any{"user_uuid": s.UserUuid, "token": except}
+	err := wrk.DeleteManyExceptOne(s, params)
 	if err != nil {
 		return err
 	}

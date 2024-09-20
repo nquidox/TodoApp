@@ -202,3 +202,27 @@ func (db *DB) DeleteRecord(model any, params map[string]any) error {
 	}
 	return nil
 }
+
+func (db *DB) DeleteManyExceptOne(model any, params map[string]any) error {
+	query := db.Connection.Model(model)
+
+	for k, v := range params {
+		switch k {
+		case "token":
+			query = query.Where(fmt.Sprintf("%s != ?", k), v)
+		default:
+			query = query.Where(fmt.Sprintf("%s = ?", k), v)
+		}
+	}
+
+	result := query.Delete(model)
+
+	if result.RowsAffected == 0 {
+		return errors.New("404")
+	}
+
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

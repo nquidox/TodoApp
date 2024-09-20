@@ -14,4 +14,5 @@ type DatabaseWorker interface {
 	UpdateRecordSubmodel(model any, submodel any, params map[string]any) error
 
 	DeleteRecord(model any, params map[string]any) error
+	DeleteManyExceptOne(model any, params map[string]any) error
 }

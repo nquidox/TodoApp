@@ -27,4 +27,10 @@ func addRoutes(s *Service) {
 
 	emailResendHandler := emailResendFunc(s)
 	s.Router.HandleFunc("POST /api/v1/reVerifyEmail/{email}", emailResendHandler)
+
+	getAllSessionsHandler := getAllSessionsFunc(s)
+	s.Router.HandleFunc("GET /api/v1/getAllSessions", getAllSessionsHandler)
+
+	closeAllSessionsHandler := closeOtherSessionsFunc(s)
+	s.Router.HandleFunc("POST /api/v1/closeOtherSessions", closeAllSessionsHandler)
 }

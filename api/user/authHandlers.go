@@ -27,8 +27,8 @@ func meFunc(s *Service) http.HandlerFunc {
 		token, err := r.Cookie(service.SessionTokenName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			service.UnauthorizedResponse(w, "")
 			log.Error(service.TokenReadErr, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
@@ -36,8 +36,8 @@ func meFunc(s *Service) http.HandlerFunc {
 		err = session.Read(s.DbWorker)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			service.UnauthorizedResponse(w, "")
 			log.Error(service.TokenValidationErr, err)
+			service.UnauthorizedResponse(w, "")
 			return
 		}
 
@@ -45,12 +45,18 @@ func meFunc(s *Service) http.HandlerFunc {
 		err = me.Read(s.DbWorker)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.UserReadErr, err)
 			log.Error(service.UserReadErr, err)
+			service.BadRequestResponse(w, service.UserReadErr, err)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+
+		log.WithFields(log.Fields{
+			"id":       me.UserUUID,
+			"username": me.Username,
+		}).Info("/me ", service.UserReadSuccess)
+
 		service.OkResponse(w, meResponse{
 			ResultCode: 0,
 			HttpCode:   200,
@@ -61,11 +67,6 @@ func meFunc(s *Service) http.HandlerFunc {
 				Username: me.Username,
 			},
 		})
-
-		log.WithFields(log.Fields{
-			"id":       me.UserUUID,
-			"username": me.Username,
-		}).Info("/me ", service.UserReadSuccess)
 	}
 }
 
@@ -89,8 +90,8 @@ func loginFunc(s *Service) http.HandlerFunc {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.JSONReadErr, err)
 			log.Error(service.JSONReadErr, err)
+			service.BadRequestResponse(w, service.JSONReadErr, err)
 			return
 		}
 
@@ -98,16 +99,16 @@ func loginFunc(s *Service) http.HandlerFunc {
 		err = service.DeserializeJSON(data, &usr)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			log.Error(service.JSONDeserializingErr, err)
+			service.UnprocessableEntityResponse(w, service.JSONDeserializingErr, err)
 			return
 		}
 
 		err = usr.CheckRequiredFields()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.ValidationErr, err)
 			log.Error(service.ValidationErr, err)
+			service.BadRequestResponse(w, service.ValidationErr, err)
 			return
 		}
 
@@ -121,23 +122,23 @@ func loginFunc(s *Service) http.HandlerFunc {
 				return
 			}
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.EmailErr, err)
 			log.Error(service.EmailErr, err)
+			service.BadRequestResponse(w, service.EmailErr, err)
 			return
 		}
 
 		if !getUsr.EmailVerified {
 			w.WriteHeader(http.StatusForbidden)
-			service.ForbiddenResponse(w, service.EmailNotVerified)
 			log.Error(service.EmailNotVerified, err)
+			service.ForbiddenResponse(w, service.EmailNotVerified)
 			return
 		}
 
 		err = comparePasswords(getUsr.Password, usr.Password)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.PasswordErr, err)
 			log.Error(service.PasswordErr, err)
+			service.BadRequestResponse(w, service.PasswordErr, err)
 			return
 		}
 
@@ -145,8 +146,8 @@ func loginFunc(s *Service) http.HandlerFunc {
 		cookie, err := session.Create(s.DbWorker, getUsr.UserUUID, s.Salt, r.UserAgent())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 			log.Error(service.SessionCreateErr, err)
+			service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
 			return
 		}
 
@@ -156,17 +157,18 @@ func loginFunc(s *Service) http.HandlerFunc {
 
 		http.SetCookie(w, &cookie)
 		w.WriteHeader(http.StatusOK)
+
+		log.WithFields(log.Fields{
+			"id":       getUsr.UserUUID,
+			"username": getUsr.Username,
+		}).Info(service.LoginSuccess)
+
 		service.OkResponse(w, service.DefaultResponse{
 			ResultCode: 0,
 			HttpCode:   http.StatusOK,
 			Messages:   "",
 			Data:       uuidOnly{UUID: getUsr.UserUUID},
 		})
-
-		log.WithFields(log.Fields{
-			"id":       getUsr.UserUUID,
-			"username": getUsr.Username,
-		}).Info(service.LoginSuccess)
 	}
 }
 
@@ -186,8 +188,8 @@ func logoutFunc(s *Service) http.HandlerFunc {
 		cookie, err := r.Cookie(service.SessionTokenName)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			service.BadRequestResponse(w, service.CookieReadErr, err)
 			log.Error(service.CookieReadErr, err)
+			service.BadRequestResponse(w, service.CookieReadErr, err)
 			return
 		}
 
@@ -195,8 +197,8 @@ func logoutFunc(s *Service) http.HandlerFunc {
 		err = session.Delete(s.DbWorker)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			service.UnauthorizedResponse(w, service.InvalidTokenErr)
 			log.Error(service.InvalidTokenErr)
+			service.UnauthorizedResponse(w, service.InvalidTokenErr)
 			return
 		}
 
@@ -204,5 +206,107 @@ func logoutFunc(s *Service) http.HandlerFunc {
 		log.WithFields(log.Fields{
 			"session": cookie.Value,
 		}).Info(service.LogoutSuccess)
+	}
+}
+
+// getAllSessionsFunc godoc
+//
+//	@Security		BasicAuth
+//	@Summary		Get all user's sessions
+//	@Description	Requests all user's sessions
+//	@Tags			Session
+//	@Produce		json
+//	@Success		200	{array}		Session					"OK"
+//	@Success		204	{array}		service.DefaultResponse	"No Content"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
+//	@Router			/getAllSessions [get]
+func getAllSessionsFunc(s *Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		token, err := r.Cookie(service.SessionTokenName)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.TokenReadErr, err)
+			service.UnauthorizedResponse(w, "")
+			return
+		}
+
+		session := Session{Token: token.Value}
+		err = session.Read(s.DbWorker)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.TokenValidationErr, err)
+			service.UnauthorizedResponse(w, "")
+			return
+		}
+
+		list, err := session.ReadAll(s.DbWorker)
+		if err != nil {
+			if err.Error() == "404" {
+				w.WriteHeader(http.StatusNoContent)
+				log.Info(service.NoContent)
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Error(service.DBReadErr, err)
+			service.InternalServerErrorResponse(w, service.DBReadErr, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		log.Info(service.SessionsReadSuccess)
+		service.OkResponse(w, list)
+	}
+}
+
+// closeOtherSessionsFunc     godoc
+//
+//	@Security		BasicAuth
+//	@Summary		Close all other sessions
+//	@Description	Closes all other active sessions except current. To close this session use /logout endpoint in auth block.
+//	@Tags			Session
+//	@Success		204
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
+//	@Router			/closeOtherSessions [post]
+func closeOtherSessionsFunc(s *Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		token, err := r.Cookie(service.SessionTokenName)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Error(service.CookieReadErr, err)
+			service.BadRequestResponse(w, service.CookieReadErr, err)
+			return
+		}
+
+		session := Session{Token: token.Value}
+		err = session.Read(s.DbWorker)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Error(service.TokenValidationErr, err)
+			service.UnauthorizedResponse(w, "")
+			return
+		}
+
+		err = session.DeleteAllExceptOne(s.DbWorker, session.Token)
+		if err != nil {
+			if err.Error() == "404" {
+				w.WriteHeader(http.StatusNoContent)
+				log.Info(service.NoContent)
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Error(service.DBReadErr, err)
+			service.InternalServerErrorResponse(w, service.DBReadErr, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+		log.Info(service.SessionsCloseSuccess)
 	}
 }
