@@ -96,10 +96,11 @@ func createListFunc(s *Service) http.HandlerFunc {
 //	@Description	Requests all todo list
 //	@Tags			Todo lists
 //	@Produce		json
-//	@Success		200	{array}		readTodoList			"OK"
-//	@Success		204	{array}		service.DefaultResponse	"No Content"
-//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
-//	@Failure		500	{object}	service.errorResponse	"Internal server error"
+//	@Param			order	query		string					false "asc/desc (default)"
+//	@Success		200		{array}		readTodoList			"OK"
+//	@Success		204		{array}		service.DefaultResponse	"No Content"
+//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
+//	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists [get]
 func getAllListsFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -114,8 +115,10 @@ func getAllListsFunc(s *Service) http.HandlerFunc {
 			return
 		}
 
+		order := validateOrder(r.URL.Query().Get("order"))
+
 		todoLists := readTodoList{}
-		lists, err := todoLists.GetAllLists(s.DbWorker, aUser)
+		lists, err := todoLists.GetAllLists(s.DbWorker, aUser, order)
 		if err != nil {
 			if err.Error() == "404" {
 				w.WriteHeader(http.StatusNoContent)

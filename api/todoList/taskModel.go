@@ -18,7 +18,7 @@ type Task struct {
 	TaskUUID     uuid.UUID `json:"id"`
 	TodoListUUID uuid.UUID `json:"-"`
 	Order        int       `json:"order"`
-	AddedDate    time.Time `json:"addedDate" gorm:"column:created_at"`
+	AddedDate    time.Time `json:"addedDate" gorm:"column:created_at; autoCreateTime"`
 	OwnerUUID    uuid.UUID `json:"-"`
 }
 
@@ -43,13 +43,15 @@ func (t *Task) Create(dbw dbWorker) error {
 	return nil
 }
 
-func (t *Task) Read(dbw dbWorker, count, page int) ([]Task, error) {
+func (t *Task) Read(dbw dbWorker, order string, count, page int) ([]Task, error) {
 	var tasks []Task
 	params := map[string]any{
 		"todo_list_uuid": t.TodoListUUID,
 		"count":          count,
 		"page":           page,
 		"owner_uuid":     t.OwnerUUID,
+		"order":          order,
+		"sort_by":        "created_at",
 	}
 	err := dbw.ReadWithPagination(&tasks, params)
 	if err != nil {

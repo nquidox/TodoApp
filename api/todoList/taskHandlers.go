@@ -106,10 +106,11 @@ func createTaskFunc(s *Service) http.HandlerFunc {
 //
 //	@Security		BasicAuth
 //	@Summary		Get tasks
-//	@Description	Requests all tasks with query parameters. Count and page params are optional. Defaults: count=10, page=1
+//	@Description	Requests all tasks with query parameters. Order, count and page params are optional. Defaults: order= desc, count=10, page=1
 //	@Tags			Tasks
 //	@Produce		json
 //	@Param			listId	path		string					true	"list uuid"
+//	@Param			order	query		string					false	"asc/desc (default)"
 //	@Param			count	query		string					false	"Count (number of task to show per page)"
 //	@Param			page	query		string					false	"Page number"
 //	@Success		200		{array}		Task					"OK"
@@ -132,6 +133,7 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 		}
 
 		q := r.URL.Query()
+		order := validateOrder(r.URL.Query().Get("order"))
 		count := validateQueryInt(q.Get("count"), 10)
 		page := validateQueryInt(q.Get("page"), 1)
 
@@ -146,11 +148,12 @@ func getTaskFunc(s *Service) http.HandlerFunc {
 		tasks := Task{TodoListUUID: id, OwnerUUID: aUser.UserUUID}
 		log.WithFields(log.Fields{
 			"ListId": id,
+			"Order":  order,
 			"Count":  count,
 			"Page":   page,
 		}).Debug("Query and path params")
 
-		read, err := tasks.Read(s.DbWorker, count, page)
+		read, err := tasks.Read(s.DbWorker, order, count, page)
 		if err != nil {
 			if err.Error() == "404" {
 				w.WriteHeader(http.StatusNoContent)
@@ -269,11 +272,11 @@ func updateTaskFunc(s *Service) http.HandlerFunc {
 //	@Description	Deletes task
 //	@Tags			Tasks
 //	@Produce		json
-//	@Success		200		{object}	service.DefaultResponse	"OK"
-//	@Failure		400		{object}	service.errorResponse	"Bad request"
-//	@Failure		401		{object}	service.errorResponse	"Unauthorized"
-//	@Failure		404		{object}	service.errorResponse	"Not Found"
-//	@Failure		500		{object}	service.errorResponse	"Internal server error"
+//	@Success		200	{object}	service.DefaultResponse	"OK"
+//	@Failure		400	{object}	service.errorResponse	"Bad request"
+//	@Failure		401	{object}	service.errorResponse	"Unauthorized"
+//	@Failure		404	{object}	service.errorResponse	"Not Found"
+//	@Failure		500	{object}	service.errorResponse	"Internal server error"
 //	@Router			/todo-lists/{listId}/tasks/{taskId} [delete]
 func deleteTaskFunc(s *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

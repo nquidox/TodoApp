@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm/clause"
 )
 
 func (db *DB) InitTable(model any) error {
@@ -70,7 +71,19 @@ func (db *DB) ReadManyRecords(model any, submodel any, params map[string]any) er
 	query := db.Connection.Model(model)
 
 	for key, value := range params {
-		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+		switch key {
+		case "order":
+			query = query.Order(clause.OrderByColumn{
+				Column: clause.Column{Name: params["sort_by"].(string)},
+				Desc:   params["order"].(string) == "desc",
+			})
+
+		case "sort_by":
+			continue
+
+		default:
+			query = query.Where(fmt.Sprintf("%s = ?", key), value)
+		}
 	}
 
 	result := query.Find(submodel)
@@ -105,6 +118,16 @@ func (db *DB) ReadWithPagination(model any, params map[string]any) error {
 					"count": params["count"],
 				}).Debug(debugLogHeader)
 			}
+
+		case "order":
+			query = query.Order(clause.OrderByColumn{
+				Column: clause.Column{Name: params["sort_by"].(string)},
+				Desc:   params["order"].(string) == "desc",
+			})
+
+		case "sort_by":
+			continue
+
 		default:
 			query = query.Where(fmt.Sprintf("%s = ?", key), value)
 			log.WithFields(log.Fields{

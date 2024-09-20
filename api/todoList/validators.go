@@ -46,3 +46,12 @@ func validateTitle(title, fieldName string) error {
 	}
 	return nil
 }
+
+func validateOrder(order string) string {
+	switch order {
+	case "asc":
+		return "asc"
+	default:
+		return "desc"
+	}
+}

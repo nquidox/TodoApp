@@ -49,9 +49,9 @@ func (c *createTodoList) Create(dbw dbWorker) error {
 	return nil
 }
 
-func (r *readTodoList) GetAllLists(dbw dbWorker, aw authUser) ([]readTodoList, error) {
+func (r *readTodoList) GetAllLists(dbw dbWorker, aw authUser, order string) ([]readTodoList, error) {
 	var allLists []readTodoList
-	params := map[string]any{"owner_uuid": aw.UserUUID}
+	params := map[string]any{"owner_uuid": aw.UserUUID, "order": order, "sort_by": "created_at"}
 	err := dbw.ReadManyRecords(TodoList{}, &allLists, params)
 	if err != nil {
 		return nil, err
