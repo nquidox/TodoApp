@@ -20,7 +20,7 @@ type Session struct {
 	Expires    time.Time
 }
 
-func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte) (http.Cookie, error) {
+func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte, userAgent string) (http.Cookie, error) {
 	token, err := generateToken(32, salt)
 	if err != nil {
 		return http.Cookie{}, err
@@ -30,7 +30,7 @@ func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte) (http.Co
 
 	s.UserUuid = userUuid
 	s.Token = token
-	s.ClientInfo = ""
+	s.ClientInfo = userAgent
 	s.Expires = expires
 
 	err = wrk.CreateRecord(s)

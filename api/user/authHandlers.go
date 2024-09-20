@@ -142,7 +142,7 @@ func loginFunc(s *Service) http.HandlerFunc {
 		}
 
 		var session Session
-		cookie, err := session.Create(s.DbWorker, getUsr.UserUUID, s.Salt)
+		cookie, err := session.Create(s.DbWorker, getUsr.UserUUID, s.Salt, r.UserAgent())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			service.InternalServerErrorResponse(w, service.SessionCreateErr, err)
