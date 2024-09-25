@@ -13,11 +13,10 @@ import (
 
 type Session struct {
 	gorm.Model `json:"-"`
-	Id         int       `json:"-"`
-	UserUuid   uuid.UUID `json:"-" gorm:"primarykey"`
+	UserUuid   uuid.UUID `json:"-"`
 	Token      string    `json:"-"`
-	ClientInfo string    `json:"Client Info"`
-	Expires    time.Time `json:"Expires"`
+	ClientInfo string    `json:"clientInfo"`
+	Expires    time.Time `json:"expires"`
 }
 
 func (s *Session) Create(wrk dbWorker, userUuid uuid.UUID, salt []byte, userAgent string) (http.Cookie, error) {
