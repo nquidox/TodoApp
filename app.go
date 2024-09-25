@@ -6,6 +6,7 @@ import (
 	"todoApp/api/todoList"
 	"todoApp/api/user"
 	"todoApp/config"
+	"todoApp/infoPages"
 	"todoApp/types"
 )
 
@@ -32,6 +33,10 @@ func (t *todoApp) Init() error {
 		DbWorker:   t.dbWorker,
 		AuthWorker: t.authWorker,
 		Router:     t.router,
+	})
+
+	infoPages.Init(&infoPages.Service{
+		Router: t.router,
 	})
 
 	return nil
