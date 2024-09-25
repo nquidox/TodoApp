@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm/clause"
+	"time"
 )
 
 func (db *DB) InitTable(model any) error {
@@ -204,18 +205,8 @@ func (db *DB) DeleteRecord(model any, params map[string]any) error {
 }
 
 func (db *DB) DeleteManyExceptOne(model any, params map[string]any) error {
-	query := db.Connection.Model(model)
-
-	for k, v := range params {
-		switch k {
-		case "token":
-			query = query.Where(fmt.Sprintf("%s != ?", k), v)
-		default:
-			query = query.Where(fmt.Sprintf("%s = ?", k), v)
-		}
-	}
-
-	result := query.Delete(model)
+	query := `UPDATE sessions SET deleted_at = ? WHERE user_uuid = ? AND token != ? AND deleted_at IS NULL`
+	result := db.Connection.Exec(query, time.Now(), params["user_uuid"], params["token"])
 
 	if result.RowsAffected == 0 {
 		return errors.New("404")
