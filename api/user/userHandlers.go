@@ -112,7 +112,6 @@ func createUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
-//	@Failure		409	{object}	service.errorResponse	"Conflict"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [get]
 func readUserFunc(s *Service) http.HandlerFunc {
@@ -160,7 +159,6 @@ func readUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		401		{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
-//	@Failure		409		{object}	service.errorResponse	"Conflict"
 //	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/user/{id} [put]
@@ -235,7 +233,6 @@ func updateUserFunc(s *Service) http.HandlerFunc {
 //	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		401	{object}	service.errorResponse	"Unauthorized"
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
-//	@Failure		409	{object}	service.errorResponse	"Conflict"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/user/{id} [delete]
 func deleteUserFunc(s *Service) http.HandlerFunc {

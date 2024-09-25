@@ -18,7 +18,6 @@ import (
 //	@Produce		json
 //	@Param			key	path		string					true	"key"
 //	@Success		200	{object}	service.DefaultResponse	"OK"
-//	@Failure		400	{object}	service.errorResponse	"Bad request"
 //	@Failure		404	{object}	service.errorResponse	"Not Found"
 //	@Failure		410	{object}	service.errorResponse	"Gone"
 //	@Failure		500	{object}	service.errorResponse	"Internal Server Error"
@@ -88,7 +87,6 @@ func emailFunc(s *Service) http.HandlerFunc {
 //	@Produce		json
 //	@Param			email	path		string					true	"key"
 //	@Success		200		{object}	service.DefaultResponse	"OK"
-//	@Failure		400		{object}	service.errorResponse	"Bad request"
 //	@Failure		404		{object}	service.errorResponse	"Not Found"
 //	@Failure		500		{object}	service.errorResponse	"Internal Server Error"
 //	@Router			/reVerifyEmail/{email} [post]

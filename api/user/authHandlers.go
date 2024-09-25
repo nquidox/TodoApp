@@ -80,7 +80,9 @@ func meFunc(s *Service) http.HandlerFunc {
 //	@Param			user	body		loginUserModel			true	"login"
 //	@Success		200		{object}	service.DefaultResponse	"OK"
 //	@Failure		400		{object}	service.errorResponse	"Bad request"
+//	@Failure		403		{object}	service.errorResponse	"Forbidden"
 //	@Failure		404		{object}	service.errorResponse	"Not found"
+//	@Failure		422		{object}	service.errorResponse	"Unprocessable entity"
 //	@Failure		500		{object}	service.errorResponse	"Internal server error"
 //	@Router			/login [post]
 func loginFunc(s *Service) http.HandlerFunc {
