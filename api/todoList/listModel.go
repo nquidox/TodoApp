@@ -8,25 +8,37 @@ import (
 
 type TodoList struct {
 	gorm.Model `json:"-"`
-	ListUuid   uuid.UUID `json:"id"`
-	Title      string    `json:"title"`
-	Order      int       `json:"order"`
-	OwnerUuid  uuid.UUID `json:"-"`
+	ListUuid   uuid.UUID  `json:"id"`
+	Title      string     `json:"title"`
+	Order      int        `json:"order"`
+	OwnerUuid  uuid.UUID  `json:"-"`
+	StartDate  *time.Time `json:"startDate"`
+	EndDate    *time.Time `json:"endDate"`
+	TextColor  string     `json:"textColor"`
+	BgColor    string     `json:"backgroundColor"`
 }
 
 type createTodoList struct {
-	ListUuid  uuid.UUID `json:"-"`
-	OwnerUuid uuid.UUID `json:"-"`
-	Title     string    `json:"title" binding:"required"  extensions:"x-order=1"`
-	Order     int       `json:"order" extensions:"x-order=2"`
+	ListUuid  uuid.UUID  `json:"-"`
+	OwnerUuid uuid.UUID  `json:"-"`
+	Title     string     `json:"title" binding:"required"  extensions:"x-order=1"`
+	Order     int        `json:"order" extensions:"x-order=2"`
+	StartDate *time.Time `json:"startDate"`
+	EndDate   *time.Time `json:"endDate"`
+	TextColor string     `json:"textColor"`
+	BgColor   string     `json:"backgroundColor"`
 }
 
 type readTodoList struct {
-	ListUuid  uuid.UUID `json:"id"`
-	Title     string    `json:"title"`
-	AddedDate time.Time `json:"addedDate" gorm:"column:created_at"`
-	Order     int       `json:"order"`
-	OwnerUuid uuid.UUID `json:"-"`
+	ListUuid  uuid.UUID  `json:"id"`
+	Title     string     `json:"title"`
+	AddedDate time.Time  `json:"addedDate" gorm:"column:created_at"`
+	Order     int        `json:"order"`
+	OwnerUuid uuid.UUID  `json:"-"`
+	StartDate *time.Time `json:"startDate"`
+	EndDate   *time.Time `json:"endDate"`
+	TextColor string     `json:"textColor"`
+	BgColor   string     `json:"backgroundColor"`
 }
 
 type Item struct {
@@ -39,6 +51,10 @@ func (c *createTodoList) Create(dbw dbWorker) error {
 		Title:     c.Title,
 		Order:     c.Order,
 		OwnerUuid: c.OwnerUuid,
+		StartDate: c.StartDate,
+		EndDate:   c.EndDate,
+		TextColor: c.TextColor,
+		BgColor:   c.BgColor,
 	}
 
 	err := dbw.CreateRecord(&list)
