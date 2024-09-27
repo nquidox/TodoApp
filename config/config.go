@@ -12,6 +12,7 @@ type EnvFileConfig struct {
 	Password     string
 	Dbname       string
 	Sslmode      string
+	DomainName   string
 	HTTPHost     string
 	HTTPPort     string
 	AppLogLevel  string
@@ -38,6 +39,7 @@ func New() *Config {
 		Password:     getEnv("DB_PASSWORD"),
 		Dbname:       getEnv("DB_NAME"),
 		Sslmode:      getEnv("DB_SSLMODE"),
+		DomainName:   getEnv("DOMAIN_NAME"),
 		HTTPHost:     getEnv("HTTP_HOST"),
 		HTTPPort:     getEnv("HTTP_PORT"),
 		AppLogLevel:  getEnv("APP_LOG_LEVEL"),

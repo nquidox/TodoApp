@@ -1,10 +1,12 @@
 package user
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
+	"html/template"
 	"net/http"
 	"time"
 	"todoApp/api/service"
@@ -167,12 +169,28 @@ func emailResendFunc(s *Service) http.HandlerFunc {
 
 func sendVerificationEmail(email string, verificationKey string, s *Service) error {
 	m := gomail.NewMessage()
-
 	m.SetHeader("From", s.Config.Config.EmailReply)
 	m.SetHeader("To", email)
 	m.SetHeader("Subject", service.EmailSubject)
-	body := fmt.Sprintf("<html>Please verify your e-mail by following this link <a href='http://localhost:9000/api/v1/verifyEmail/%[1]s'>Verify</a> Key to copypaste: %[1]s</html>", verificationKey)
-	m.SetBody("text/html", body)
+
+	type link struct {
+		Link string
+	}
+
+	l := link{Link: fmt.Sprintf("%s%s", s.Config.Config.DomainName, verificationKey)}
+
+	tmpl, err := template.ParseFiles("static/emailVerification.html")
+	if err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+	err = tmpl.Execute(&body, l)
+	if err != nil {
+		return err
+	}
+
+	m.SetBody("text/html", body.String())
 
 	d := gomail.NewDialer(
 		s.Config.Config.EmailService,
