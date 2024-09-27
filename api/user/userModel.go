@@ -10,7 +10,7 @@ import (
 type User struct {
 	gorm.Model           `json:"-"`
 	ID                   int       `json:"-"`
-	Email                string    `json:"email" binding:"required" example:"example@email.box" extensions:"x-order=1"`
+	Email                string    `json:"email" gorm:"index" binding:"required" example:"example@email.box" extensions:"x-order=1"`
 	EmailVerified        bool      `json:"-"`
 	EmailVerificationKey string    `json:"-"`
 	EmailKeyCreatedAt    time.Time `json:"-"`
@@ -18,7 +18,7 @@ type User struct {
 	Username             string    `json:"login" extensions:"x-order=3"`
 	Name                 string    `json:"name" extensions:"x-order=4"`
 	Surname              string    `json:"surname" extensions:"x-order=5"`
-	UserUUID             uuid.UUID `json:"-"`
+	UserUUID             uuid.UUID `json:"-" gorm:"index"`
 	IsSuperuser          bool      `json:"-"`
 }
 

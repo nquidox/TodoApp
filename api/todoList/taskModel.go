@@ -8,31 +8,31 @@ import (
 
 type Task struct {
 	gorm.Model   `json:"-"`
-	Description  string    `json:"description"`
-	Title        string    `json:"title"`
-	Completed    string    `json:"completed"`
-	Status       int       `json:"status"`
-	Priority     int       `json:"priority"`
-	StartDate    time.Time `json:"startDate"`
-	Deadline     time.Time `json:"deadline"`
-	TaskUUID     uuid.UUID `json:"id"`
-	TodoListUUID uuid.UUID `json:"-"`
-	Order        int       `json:"order"`
-	AddedDate    time.Time `json:"addedDate" gorm:"column:created_at; autoCreateTime"`
-	OwnerUUID    uuid.UUID `json:"-"`
+	Description  string     `json:"description"`
+	Title        string     `json:"title"`
+	Completed    string     `json:"completed"`
+	Status       int        `json:"status"`
+	Priority     int        `json:"priority"`
+	StartDate    *time.Time `json:"startDate"`
+	Deadline     *time.Time `json:"deadline"`
+	TaskUUID     uuid.UUID  `json:"id" gorm:"index"`
+	TodoListUUID uuid.UUID  `json:"-" gorm:"index"`
+	Order        int        `json:"order"`
+	AddedDate    time.Time  `json:"addedDate" gorm:"column:created_at; autoCreateTime"`
+	OwnerUUID    uuid.UUID  `json:"-" gorm:"index"`
 }
 
 type createTask struct {
-	Title        string    `json:"title" extensions:"x-order=1"`
-	Description  string    `json:"description" extensions:"x-order=2"`
-	Status       int       `json:"status" extensions:"x-order=3"`
-	Priority     int       `json:"priority" extensions:"x-order=4"`
-	Order        int       `json:"order" extensions:"x-order=5"`
-	StartDate    string    `json:"startDate" extensions:"x-order=6"`
-	Deadline     string    `json:"deadline" extensions:"x-order=7"`
-	TodoListUUID uuid.UUID `json:"-"`
-	TaskUUID     uuid.UUID `json:"-"`
-	OwnerUUID    uuid.UUID `json:"-"`
+	Title        string     `json:"title" extensions:"x-order=1"`
+	Description  string     `json:"description" extensions:"x-order=2"`
+	Status       int        `json:"status" extensions:"x-order=3"`
+	Priority     int        `json:"priority" extensions:"x-order=4"`
+	Order        int        `json:"order" extensions:"x-order=5"`
+	StartDate    *time.Time `json:"startDate" extensions:"x-order=6"`
+	Deadline     *time.Time `json:"deadline" extensions:"x-order=7"`
+	TodoListUUID uuid.UUID  `json:"-"`
+	TaskUUID     uuid.UUID  `json:"-"`
+	OwnerUUID    uuid.UUID  `json:"-"`
 }
 
 func (t *Task) Create(dbw dbWorker) error {

@@ -11,9 +11,10 @@ type TodoList struct {
 	ListUuid   uuid.UUID  `json:"id"`
 	Title      string     `json:"title"`
 	Order      int        `json:"order"`
-	OwnerUuid  uuid.UUID  `json:"-"`
+	OwnerUuid  uuid.UUID  `json:"-" gorm:"index"`
 	StartDate  *time.Time `json:"startDate"`
 	EndDate    *time.Time `json:"endDate"`
+	Status     int        `json:"status"`
 	TextColor  string     `json:"textColor"`
 	BgColor    string     `json:"backgroundColor"`
 }
@@ -25,6 +26,7 @@ type createTodoList struct {
 	Order     int        `json:"order" extensions:"x-order=2"`
 	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
+	Status    int        `json:"status"`
 	TextColor string     `json:"textColor"`
 	BgColor   string     `json:"backgroundColor"`
 }
@@ -37,6 +39,7 @@ type readTodoList struct {
 	OwnerUuid uuid.UUID  `json:"-"`
 	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
+	Status    int        `json:"status"`
 	TextColor string     `json:"textColor"`
 	BgColor   string     `json:"backgroundColor"`
 }
