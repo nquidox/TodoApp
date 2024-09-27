@@ -39,6 +39,7 @@ APP_LOG_LEVEL=info
 DB_LOG_LEVEL=silent
 
 # Email
+DOMAIN_NAME = "your frontpage domain name for verification link"
 EMAIL_LOGIN = login
 EMAIL_PASS = pass
 EMAIL_REPLY = reply@emailservice.box
