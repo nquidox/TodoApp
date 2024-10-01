@@ -173,7 +173,7 @@ func (db *DB) UpdateRecordSubmodel(model any, submodel any, params map[string]an
 		query = query.Where(fmt.Sprintf("%s = ?", k), v)
 	}
 
-	result := query.Updates(submodel)
+	result := query.Select("*").Updates(submodel)
 
 	if result.RowsAffected == 0 {
 		return errors.New("404")
