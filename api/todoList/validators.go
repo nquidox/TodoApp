@@ -2,6 +2,7 @@ package todoList
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -29,11 +30,13 @@ func validateQueryInt(queryValue string, defaultValue int) int {
 }
 
 func validateTitle(title, fieldName string) error {
-	if len(title) < 1 {
-		return errors.New(fieldName + " has no title")
+	minChars := 1
+	maxChars := 1000
+	if len([]rune(title)) < minChars {
+		return errors.New(fmt.Sprintf("%s has to be at least %d characters long.", fieldName, minChars))
 	}
-	if len(title) > 100 {
-		return errors.New("title is too long (MAX=100)")
+	if len([]rune(title)) > maxChars {
+		return errors.New(fmt.Sprintf("%s is too long (MAX=%d)", fieldName, maxChars))
 	}
 	return nil
 }
