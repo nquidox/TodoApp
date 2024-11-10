@@ -1,4 +1,21 @@
 # TODO APP
+
+
+## Важная информация
+* Этот проект создан для образовательных и развлекательных целей. Он не рассматривается как законченный и готовый к использованию продукт.
+* В этом коде много плохих, странных, сомнительных, глупых итд. решений, которые сделаны НАМЕРЕННО.
+* Лучшие практики и общепринятные методы построения программ сознательно нарушаются с целью попробовать другие способы и решения даже в ущерб производительности.
+* SOLID/DRY/KISS/YAGNI также не соблюдаются, потому что я хотел исследовать разные возможности написания кода на го.
+* Некоторые "ошибки" в базе данных (например, отсутствие внешних ключей) также были сделанны намеренно.
+
+## Important
+* This project exists for educational and recreational purposes only. It is not supposed to be a finished good-to-go product.
+* This code has a lot of bad, strange, weird, dumb etc. decisions ON PURPOSE.
+* Best practises and common ways to do things ignored for sake of finding another solutions even with worse perfomance.
+* SOLID/DRY/KISS/YAGNI etc also broken and not respected because I wanted to explore different possibilities of programming in go.
+* Some "mistakes" in database (e.g. no foreign keys) also made intentionally.
+
+
 ## Clone of educational API for my friend's ToDo App
 
 Origin: https://social-network.samuraijs.com/docs
